@@ -16,7 +16,7 @@ def generate_output(llm_model, prompts, sampling_params, project_root):
         sampling_params (SamplingParams): Sampling parameters for generation.
     """
     llm = LLM(model=llm_model,
-              tensor_parallel_size=1, #!! Probably adding the calculate_optimal_tensor_parallel_size function in the future
+              tensor_parallel_size=1, #!! Probably adding the calculate_optimal_tensor_parallel_size function in the future. Will have to debug everything again, because it will change the way the model is loaded.
               max_model_len=16384,
               trust_remote_code=True)
     
