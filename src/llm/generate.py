@@ -26,7 +26,8 @@ def generate_output(llm_model, prompts, sampling_params, project_root):
     for output in outputs:
         prompt = output.prompt
         generated_text = output.outputs[0].text
-        print(f"Prompt: {prompt}, Generated text: {generated_text}")
+        print(f"-"*50 + "\n")
+        print(f"Prompt: {prompt}. \nGenerated text: {generated_text}")
                     
         result_item = {
             "prompt": prompt,
@@ -53,13 +54,13 @@ if __name__ == "__main__":
     scenarios = df_scenarios["prompt"].tolist()[:10]  #!! Limiting to the first 10 prompts for testing
     unique_emotions = df_scenarios["context"].unique().tolist()
 
-    prompts = [f'In a range from 1 to 9, consider the amount of {emotion} in the following scenario: "{scenario}". Explain your response. The amount of {emotion} is' 
+    prompts = [f'USER: In a range from 1 to 9, consider the amount of {emotion} in the following scenario: "{scenario}". The amount of {emotion} is' 
                for emotion, scenario in itertools.product(unique_emotions, scenarios)]
 
     sampling_params = SamplingParams(temperature=0.8,
                                      top_p=0.95,
                                      max_tokens=256)
 
-    llm_model = "Qwen/Qwen3-14B"
+    llm_model = "" # "microsoft/Phi-3-medium-128k-instruct" # "Qwen/Qwen3-14B"
 
     generate_output(llm_model, prompts, sampling_params, project_root)
