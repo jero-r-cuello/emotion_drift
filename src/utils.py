@@ -5,6 +5,47 @@ import json
 import numpy as np
 import torch 
 import pandas as pd
+import random
+
+def load_andyzou_situations_dataset(data_dir, user_tag='[INST]', assistant_tag='[\INST]'):
+    """
+    Loads the Andy Zou Situations dataset and formats it for training and testing.
+    Extracted from https://github.com/andyzoujm/representation-engineering/blob/main/examples/primary_emotions/utils.py
+    """
+    random.seed(0)
+
+    template_str = '{user_tag} Consider the {emotion} of the following scenario:\nScenario: {scenario}\nAnswer: {assistant_tag} '
+    emotions = ["happiness", "sadness", "anger", "fear", "disgust", "surprise"]
+    raw_data = {}
+    for emotion in emotions:
+        with open(os.path.join(data_dir, f'{emotion}.json')) as file:
+            # raw_data[emotion] = json.load(file)
+            raw_data[emotion] = list(set(json.load(file)))[:200] #!! This is done in the original paper too, but its not clear why. Seems arbitrary
+
+    formatted_data = {}
+    for emotion in emotions:
+        c_e, o_e = raw_data[emotion], np.concatenate([v for k,v in raw_data.items() if k != emotion])
+        random.shuffle(o_e)
+
+        data = [[c,o] for c,o in zip(c_e, o_e)]
+        train_labels = []
+        for d in data:
+            true_s = d[0]
+            random.shuffle(d)
+            train_labels.append([s == true_s for s in d])
+        
+        data = np.concatenate(data).tolist()
+        data_ = np.concatenate([[c,o] for c,o in zip(c_e, o_e)]).tolist()
+        
+        emotion_test_data = [template_str.format(emotion=emotion, scenario=d, user_tag=user_tag, assistant_tag=assistant_tag) for d in data_]
+        emotion_train_data = [template_str.format(emotion=emotion, scenario=d, user_tag=user_tag, assistant_tag=assistant_tag) for d in data]
+
+        formatted_data[emotion] = {
+            'train': {'data': emotion_train_data, 'labels': train_labels},
+            'test': {'data': emotion_test_data, 'labels': [[1,0]* len(emotion_test_data)]}
+        }
+    return formatted_data
+
 
 def load_dataset(dataset_name, testing=False):
     """
@@ -26,6 +67,70 @@ def load_dataset(dataset_name, testing=False):
         if testing:
             df_dataset = df_dataset.head(10)
 
+    elif dataset_name == "emotion_query" or dataset_name == "xuanfengzu_emotion_query":
+        data_path = os.path.join("data", "01_stimuli", "xuanfengzu_emotion_query", "emotion_query.csv")
+        df_dataset = pd.read_csv(data_path)
+
+        if testing:
+            df_dataset = df_dataset.head(10)
+
+    elif dataset_name == "andyzou_rep_eng":        
+        data_dir = os.path.join("data", "01_stimuli", "andyzou_situations_dataset")
+        formatted_data = load_andyzou_situations_dataset(data_dir)
+
+        prompt_data = []
+        # Iterate through each emotion (e.g., "happiness")
+        for emotion, splits in formatted_data.items():
+            # Now, iterate through the splits themselves ('train' and 'test')
+            for split_name, split_data in splits.items():
+                
+                # --- LOGIC FOR THE TRAIN SPLIT ---
+                # The train split has shuffled pairs, so its labeling logic is more complex.
+                if split_name == 'train':
+                    prompts = split_data['data']
+                    label_pairs = split_data['labels'] # List of [bool, bool] pairs
+
+                    for i, label_pair in enumerate(label_pairs):
+                        prompt1_idx = 2 * i
+                        prompt2_idx = 2 * i + 1
+
+                        if prompt1_idx < len(prompts) and prompt2_idx < len(prompts):
+                            prompt_data.append({
+                                "prompt_text": prompts[prompt1_idx],
+                                "emotion": emotion,
+                                "label": int(label_pair[0]), # Convert True/False to 1/0
+                                "split": split_name # Add split info for easy filtering later
+                            })
+                            prompt_data.append({
+                                "prompt_text": prompts[prompt2_idx],
+                                "emotion": emotion,
+                                "label": int(label_pair[1]),
+                                "split": split_name
+                            })
+                
+                # --- LOGIC FOR THE TEST SPLIT ---
+                # The test split is not shuffled, so its labeling is a direct 1-to-1 mapping.
+                elif split_name == 'test':
+                    prompts = split_data['data']
+                    # The original labels are in a nested list like [[1, 0, 1, 0...]], so we take the first element.
+                    flat_labels = split_data['labels'][0]
+
+                    for i, prompt_text in enumerate(prompts):
+                        # Simple direct mapping
+                        label = flat_labels[i]
+                        prompt_data.append({
+                            "prompt_text": prompt_text,
+                            "emotion": emotion,
+                            "label": label,
+                            "split": split_name
+                        })
+
+        if testing:
+            return prompt_data[:10]
+        
+
+        return prompt_data
+
     else:
         raise ValueError(f"Dataset {dataset_name} is not supported.")
     
@@ -46,7 +151,7 @@ def load_dataset(dataset_name, testing=False):
 #                        for emotion, scenario in itertools.product(unique_emotions, scenarios)]
 
 
-def save_results_to_json(model_name, results_data, project_root_path, timestamp): 
+def save_results_to_json(model_name, dataset_used, results_data, project_root_path, timestamp): 
     """
     Saves the results of the model generation to a JSON file.
     The filename is based on the model name and a provided timestamp.
@@ -63,6 +168,7 @@ def save_results_to_json(model_name, results_data, project_root_path, timestamp)
     output_data = {
         "model_name": model_name,
         "generation_date": timestamp,
+        "dataset_used": dataset_used,
         "results": results_data
     }
     

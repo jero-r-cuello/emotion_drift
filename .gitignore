@@ -1,1 +1,4 @@
 *.pt
+*.json
+data/03_activations/
+figures/

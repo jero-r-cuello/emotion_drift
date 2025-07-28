@@ -10,7 +10,7 @@ from transformers import AutoConfig
 from src.utils import save_results_to_json, load_dataset
 
 
-def generate(model_name, target_layers, dataset_name="andyzou_situations"):
+def generate(model_name, target_layers, dataset_name="andyzou_situations", dataset_testing=False):
     """
     Generate outputs for a list of prompts using the specified model and target layers.
     Captures activations from specified layers and saves results to JSON files.
@@ -25,7 +25,7 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations"):
         
         # Load the dataset and generate the prompts.
         prompt_data = load_dataset(dataset_name, 
-                                   testing=True)  #!! Set testing=True for quick runs
+                                   testing=dataset_testing)  #!! Set testing=True for quick runs
         
         print("\n[REPO INFO] Initializing the LLM...\n")
         llm = LLM(
@@ -54,31 +54,65 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations"):
             prompt_to_generate = data_item["prompt_text"]
             emotion_for_this_prompt = data_item["emotion"]
 
-            prompt_key = f"prompt_{i}"
-            hook_instructions['save_path'] = activations_run_dir
-            hook_instructions['prompt_key'] = prompt_key
-            hook_instructions['target_layers'] = target_layers # Pasamos la lista de capas a capturar
-            
-            output = llm.generate(prompt_to_generate, sampling_params)[0]
-            
-            hook_instructions.clear()
+            label_for_this_prompt = data_item.get("label", -1)
+            split_for_this_prompt = data_item.get("split", "unknown")
 
-            prompt_text = output.prompt
-            generated_text = output.outputs[0].text
+            if dataset_name == "emotion_query" or dataset_name == "xuanfengzu_emotion_query": #!! Added this to handle the specific case of emotion_query dataset. Maybe should be handled in the load_dataset function.
+                neutral_prompt = f'Please answer the following query with neutrality: {prompt_to_generate}'
+                emotional_prompt = f'Please answer the following query with {emotion_for_this_prompt}: {prompt_to_generate}'
+                for prompt in [neutral_prompt, emotional_prompt]:
+                    prompt_key = f"prompt_{i}_neutral" if prompt == neutral_prompt else f"prompt_{i}_emotional"
+                    hook_instructions['save_path'] = activations_run_dir
+                    hook_instructions['prompt_key'] = prompt_key
+                    hook_instructions['target_layers'] = target_layers
             
-            print(f"\nPROMPT:\n{prompt_text}")
-            print(f"\nGENERATED TEXT:\n{generated_text}")
+                    output = llm.generate(prompt, sampling_params)[0]
             
-            print(f"\n[REPO INFO] Activations of {prompt_key} were saved by vLLM workers.")
+                    hook_instructions.clear()
 
-            result_item = {"prompt": prompt_text,
-                               "generated_text": generated_text,
-                               "emotion": emotion_for_this_prompt}
-            all_results_to_save.append(result_item)
+                    prompt_text = output.prompt
+                    generated_text = output.outputs[0].text
+            
+                    print(f"\nPROMPT:\n{prompt_text}")
+                    print(f"\nGENERATED TEXT:\n{generated_text}")
+            
+                    print(f"\n[REPO INFO] Activations of {prompt_key} were saved by vLLM workers.")
+
+                    result_item = {"prompt_id": prompt_key,
+                                   "prompt": prompt_text,
+                                   "generated_text": generated_text,
+                                   "text_emotion": emotion_for_this_prompt}
+                    all_results_to_save.append(result_item)
+
+            else: # For now, else is andyzou
+                prompt_key = f"prompt_{i}"
+                hook_instructions['save_path'] = activations_run_dir
+                hook_instructions['prompt_key'] = prompt_key
+                hook_instructions['target_layers'] = target_layers
+                
+                output = llm.generate(prompt_to_generate, sampling_params)[0]
+                
+                hook_instructions.clear()
+
+                prompt_text = output.prompt
+                generated_text = output.outputs[0].text
+                
+                print(f"\nPROMPT:\n{prompt_text}")
+                print(f"\nGENERATED TEXT:\n{generated_text}")
+                
+                print(f"\n[REPO INFO] Activations of {prompt_key} were saved by vLLM workers.")
+
+                result_item = {"prompt": prompt_text,
+                                "generated_text": generated_text,
+                                "emotion_considered": emotion_for_this_prompt,
+                                "label": label_for_this_prompt,
+                                "split": split_for_this_prompt}
+                all_results_to_save.append(result_item)
         
         if all_results_to_save:
             save_results_to_json(
                 model_name=model_name,
+                dataset_used=dataset_name,
                 results_data=all_results_to_save,
                 project_root_path=project_root,
                 timestamp=timestamp
@@ -93,4 +127,6 @@ if __name__ == "__main__":
     TARGET_LAYERS = [l for l in range(num_layers)] # List of layers to observe.
 
     generate(model_name=MODEL_NAME,
-             target_layers=TARGET_LAYERS)
+             target_layers=TARGET_LAYERS,
+             dataset_name="andyzou_rep_eng", #!! Change this to the dataset you want to use.
+             dataset_testing=False)
