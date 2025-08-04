@@ -323,3 +323,95 @@ else:
 
 print("-" * 50)
 # %%
+
+## 6. t-SNE Visualization of diff. vectors for Each Layer ##
+
+from sklearn.manifold import TSNE
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+print("-" * 50)
+print("Generating t-SNE plot of prompt differences for EACH layer.")
+
+# Check if layer_numbers is defined. If not, create a fallback.
+try:
+    if not layer_numbers:
+        raise NameError
+except NameError:
+    print("Warning: 'layer_numbers' not found. Inferring from the first data row.")
+    first_row_scores = test_df.iloc[0]['layer_scores']
+    any_emotion = list(first_row_scores.keys())[0]
+    layer_numbers = list(first_row_scores[any_emotion].keys())
+
+# Loop through each layer and create a separate t-SNE plot
+for layer_to_visualize in layer_numbers:
+    if layer_to_visualize==0:
+        continue
+    print("\n" + "="*50)
+    print(f"Processing Layer {layer_to_visualize}...")
+    
+    # 1. Collect the difference vectors from the training set for the current layer.
+    all_diffs_list = []
+    all_emotions_list = []
+
+    for emotion in unique_emotions:
+        emotion_df = train_df[train_df["emotion_considered"] == emotion].copy()
+        prompt_ids_for_emotion = sorted(emotion_df["prompt_id"].unique())
+
+        for i in range(0, len(prompt_ids_for_emotion), 2):
+            id1 = prompt_ids_for_emotion[i]
+            id2 = prompt_ids_for_emotion[i+1]
+            
+            # Extract activations specifically for the current layer in the loop
+            activations1 = emotion_df[emotion_df["prompt_id"] == id1]["activations"].values[0]['last_token_activation'][layer_to_visualize]
+            activations2 = emotion_df[emotion_df["prompt_id"] == id2]["activations"].values[0]['last_token_activation'][layer_to_visualize]
+
+            diff = activations1 - activations2
+
+            # Normalize the difference vector
+            norm = np.linalg.norm(diff)
+            normalized_diff = diff / norm if norm > 0 else diff
+
+            all_diffs_list.append(normalized_diff)
+            all_emotions_list.append(emotion)
+
+    # Convert the list of difference vectors into a 2D numpy array for t-SNE
+    diff_matrix = np.array(all_diffs_list)
+    print(f"Created a matrix of differences for Layer {layer_to_visualize} with shape: {diff_matrix.shape}")
+
+    # 2. Apply the t-SNE algorithm
+    # Perplexity should be less than the number of samples.
+    perplexity_value = min(30, len(diff_matrix) - 1)
+    if perplexity_value <= 0:
+        print(f"Skipping Layer {layer_to_visualize} due to insufficient data points ({len(diff_matrix)}).")
+        continue
+
+    print(f"Applying t-SNE with perplexity={perplexity_value}... (this may take a moment)")
+    tsne = TSNE(n_components=2, random_state=42, perplexity=perplexity_value, max_iter=1000, init='pca', learning_rate='auto')
+    tsne_results = tsne.fit_transform(diff_matrix)
+
+    # 3. Create and display the plot for the current layer
+    print("Generating the plot...")
+    tsne_df = pd.DataFrame(data=tsne_results, columns=['tsne-2d-one', 'tsne-2d-two'])
+    tsne_df['emotion'] = all_emotions_list
+
+    plt.figure(figsize=(16, 10))
+    sns.scatterplot(
+        x="tsne-2d-one", y="tsne-2d-two",
+        hue="emotion",
+        palette=sns.color_palette("hsv", len(unique_emotions)),
+        data=tsne_df,
+        legend="full",
+        alpha=0.8
+    )
+
+    plt.title(f't-SNE of Prompt-Pair Differences (Layer {layer_to_visualize})', fontsize=18)
+    plt.xlabel('t-SNE Dimension 1', fontsize=12)
+    plt.ylabel('t-SNE Dimension 2', fontsize=12)
+    plt.legend(title='Emotion', bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+    plt.tight_layout()
+    plt.show()
+
+print("\n" + "-"*50)
+print("t-SNE visualization process completed for all layers!")
+# %%

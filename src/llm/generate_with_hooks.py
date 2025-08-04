@@ -9,7 +9,7 @@ import vllm.hook_store as hook_store
 from transformers import AutoConfig
 import json
 import glob
-from src.utils import save_results_to_json, load_dataset
+from src.utils import load_dataset
 
 
 def generate(model_name, target_layers, dataset_name="andyzou_situations", dataset_testing=False, resume_run=True):
@@ -101,7 +101,8 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations", datas
                     prompts_to_process.append(
                         (f'Please answer the following query with {emotion_for_this_prompt}: {prompt_to_generate}', f"prompt_{i}_emotional")
                     )
-                else: # For now, else is andyzou
+
+                else: # For now, else is andyzou, and out_of_domain
                     prompts_to_process.append(
                         (prompt_to_generate, f"prompt_{i}")
                     )
@@ -136,7 +137,15 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations", datas
                                        "prompt": prompt_text,
                                        "generated_text": generated_text,
                                        "text_emotion": emotion_for_this_prompt}
-                    else:
+                        
+                    if dataset_name == "out_of_domain":
+                        result_item = {"prompt_key": prompt_key,
+                                       "prompt_id": prompt_key,
+                                       "prompt": prompt_text,
+                                       "generated_text": generated_text,
+                                       "emotion_scenario": emotion_for_this_prompt}
+                        
+                    else: # For now, else is andyzou
                         result_item = {"prompt_key": prompt_key,
                                        "prompt": prompt_text,
                                        "generated_text": generated_text,
@@ -149,6 +158,8 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations", datas
                     f_results.flush()
 
         print("\n[REPO INFO] Generation complete. All results have been saved.\n")
+
+        return f'{safe_model_name}_{timestamp}' # Safe name of the run
         
 if __name__ == "__main__":
     MODEL_NAME = "microsoft/Phi-3-medium-128k-instruct" #!! For now, this script only works with models that use vllm/model_executor/models/llama.py
