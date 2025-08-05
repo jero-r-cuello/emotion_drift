@@ -64,7 +64,7 @@ def pre_processing_results(run_to_load, dataset_used, save=True):
     print("\nIntermediate long-format DataFrame created. Now nesting...")
 
     # Create nested dataframe
-    grouping_cols = ['prompt_id', 'prompt', 'generated_text', 'emotion_considered', 'label', 'split']
+    grouping_cols = [c for c in df_long.columns if c not in ['layer_number', 'mean_activation', 'last_token_activation']]
     activation_cols = ['layer_number', 'mean_activation', 'last_token_activation']
     
     grouped = df_long.groupby(grouping_cols, sort=False)

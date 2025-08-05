@@ -12,7 +12,7 @@ import glob
 from src.utils import load_dataset
 
 
-def generate(model_name, target_layers, dataset_name="andyzou_situations", dataset_testing=False, resume_run=True):
+def generate(model_name, target_layers, dataset_name="andyzou_situations", dataset_testing=False, resume_run=False):
     """
     Generate outputs for a list of prompts, saving results incrementally and supporting resumption.
     Captures activations from specified layers and saves results to a .jsonl file.
@@ -30,13 +30,15 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations", datas
             model=model_name,
             tensor_parallel_size=1,
             trust_remote_code=True,
-            max_model_len=16384,
+            max_model_len=8192, #!! Max of Llama-3-8B, but can be changed
             enforce_eager=True
         )
         sampling_params = SamplingParams(temperature=0.8, top_p=0.95, max_tokens=256)
         print("\n[REPO INFO] LLM initialized successfully.\n")
 
-        # ### MODIFICATION START: New logic for checkpointing and incremental saving ###
+        home_model_dir = "/home/models/"
+        if model_name.startswith(home_model_dir):
+            model_name = model_name[len(home_model_dir):]
 
         safe_model_name = model_name.replace("/", "_")
         
@@ -162,7 +164,7 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations", datas
         return f'{safe_model_name}_{timestamp}' # Safe name of the run
         
 if __name__ == "__main__":
-    MODEL_NAME = "microsoft/Phi-3-medium-128k-instruct" #!! For now, this script only works with models that use vllm/model_executor/models/llama.py
+    MODEL_NAME = "/home/models/Meta-Llama-3-8B" #!! For now, this script only works with models that use vllm/model_executor/models/llama.py
     
     config = AutoConfig.from_pretrained(MODEL_NAME)
     num_layers = config.num_hidden_layers
@@ -172,4 +174,5 @@ if __name__ == "__main__":
     generate(model_name=MODEL_NAME,
              target_layers=TARGET_LAYERS,
              dataset_name="andyzou_rep_eng", #!! Change this to the dataset you want to use.
-             dataset_testing=False)
+             dataset_testing=True,
+             resume_run=False)

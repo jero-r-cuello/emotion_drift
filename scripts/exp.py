@@ -14,7 +14,7 @@ run_to_load = generate(model_name=MODEL_NAME,
                        target_layers=TARGET_LAYERS,
                        dataset_name=DATASET,
                        dataset_testing=False,
-                       resume_run=True)
+                       resume_run=False)
 
 pre_processing_results(run_to_load=run_to_load,
                        dataset_used=DATASET,
