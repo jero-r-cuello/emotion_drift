@@ -5,3 +5,4 @@
 data/03_activations/
 figures/
 *.joblib
+data/01_stimuli/sharegpt/sharegpt_92k.csv

@@ -10,8 +10,9 @@ import seaborn as sns
 
 
 MODELS_DIR = "/home/jcuello/emotion_drift/models/multiclass_probes"
-NEW_DATA_PATH = "/home/jcuello/emotion_drift/data/03_activations/out_of_domain_microsoft_Phi-3-medium-128k-instruct_20250804_165130.pkl"
+NEW_DATA_PATH = "/home/jcuello/emotion_drift/data/03_activations/out_of_domain_Meta-Llama-3-8B_20250806_155308.pkl"
 EMOTION_COLUMN = "emotion_scenario"
+LLM_USED = "Meta-Llama-3-8B"
 os.makedirs("/home/jcuello/emotion_drift/figures/multi_class_probe_evaluation", exist_ok=True)
 
 print(f'Loading data from {NEW_DATA_PATH}')
@@ -28,7 +29,7 @@ print("="*50)
 
 layer_accuracies = {}
 for layer in layer_numbers:
-    model_filename = f'multiclass_probe_layer_{layer}_trained_on_{EMOTION_COLUMN}.joblib'
+    model_filename = f'{LLM_USED}_multiclass_probe_layer_{layer}_trained_on_{EMOTION_COLUMN}.joblib'
     model_path = os.path.join(MODELS_DIR, model_filename)
 
     if not os.path.exists(model_path):
@@ -99,14 +100,14 @@ if layer_accuracies:
     ax.legend()
     plt.tight_layout()
 
-    output_filename = "/home/jcuello/emotion_drift/figures/multi_class_probe_evaluation/accuracy_per_layer.png"
+    output_filename = f"/home/jcuello/emotion_drift/figures/multi_class_probe_evaluation/{LLM_USED}_accuracy_per_layer.png"
     plt.savefig(output_filename, dpi=300)
     print(f'\nBar plot saved at: {output_filename}')
     plt.show()
 
 print(f'\nGenerating confusion matrix for best layer ({best_layer})...')
 
-best_model_path = os.path.join(MODELS_DIR, f'multiclass_probe_layer_{best_layer}_trained_on_{EMOTION_COLUMN}.joblib')
+best_model_path = os.path.join(MODELS_DIR, f'{LLM_USED}_multiclass_probe_layer_{best_layer}_trained_on_{EMOTION_COLUMN}.joblib')
 best_probe_model = joblib.load(best_model_path)
 
 X_test_best_layer = np.array([d["last_token_activation"][best_layer] for d in new_df["activations"]])
@@ -128,7 +129,7 @@ ConfusionMatrixDisplay.from_predictions(
 ax.set_title(f'Confusion matrix for layer {best_layer} (best)\n(Accuracy: {best_accuracy:.2%})', fontsize=15)
 plt.tight_layout()
 
-plt.savefig(f'/home/jcuello/emotion_drift/figures/multi_class_probe_evaluation/confusion_matrix_layer_{best_layer}.png', dpi=300)
+plt.savefig(f'/home/jcuello/emotion_drift/figures/multi_class_probe_evaluation/{LLM_USED}_confusion_matrix_layer_{best_layer}.png', dpi=300)
 print(f'Confusion matrix saved as "confusion_matrix_layer_{best_layer}.png"')
 plt.show()
 
@@ -146,7 +147,7 @@ ConfusionMatrixDisplay.from_predictions(
 ax_norm.set_title(f'Normalized confusion matrix for layer {best_layer} (best)', fontsize=15)
 plt.tight_layout()
 
-plt.savefig(f'/home/jcuello/emotion_drift/figures/multi_class_probe_evaluation/confusion_matrix_normalized_layer_{best_layer}.png', dpi=300)
+plt.savefig(f'/home/jcuello/emotion_drift/figures/multi_class_probe_evaluation/{LLM_USED}_confusion_matrix_normalized_layer_{best_layer}.png', dpi=300)
 print(f'Confusion matrix saved as "confusion_matrix_normalized_layer_{best_layer}.png"')
 plt.show()
 

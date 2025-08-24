@@ -3,6 +3,7 @@
 import multiprocessing
 import os
 import pandas as pd
+import re
 import datetime
 from vllm import LLM, SamplingParams
 import vllm.hook_store as hook_store
@@ -12,7 +13,7 @@ import glob
 from src.utils import load_dataset
 
 
-def generate(model_name, target_layers, dataset_name="andyzou_situations", dataset_testing=False, resume_run=False):
+def generate(model_name, target_layers, dataset_name="andyzou_situations", dataset_testing=False, resume_run=False, user_tag='[INST]', assistant_tag='[\INST]', activation_save_batch_size=64):
     """
     Generate outputs for a list of prompts, saving results incrementally and supporting resumption.
     Captures activations from specified layers and saves results to a .jsonl file.
@@ -30,10 +31,10 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations", datas
             model=model_name,
             tensor_parallel_size=1,
             trust_remote_code=True,
-            max_model_len=8192, #!! Max of Llama-3-8B, but can be changed
+            max_model_len=4092, #!! Max of Llama-2-7b-chat-hf, but can be changed
             enforce_eager=True
         )
-        sampling_params = SamplingParams(temperature=0.8, top_p=0.95, max_tokens=256)
+        sampling_params = SamplingParams(temperature=0.8, top_p=0.95, max_tokens=256) #!! Check, maybe the default is better
         print("\n[REPO INFO] LLM initialized successfully.\n")
 
         home_model_dir = "/home/models/"
@@ -104,7 +105,7 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations", datas
                         (f'Please answer the following query with {emotion_for_this_prompt}: {prompt_to_generate}', f"prompt_{i}_emotional")
                     )
 
-                else: # For now, else is andyzou, and out_of_domain
+                else: # For now, else is andyzou, out_of_domain, and llm_focused
                     prompts_to_process.append(
                         (prompt_to_generate, f"prompt_{i}")
                     )
@@ -120,7 +121,10 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations", datas
                     hook_instructions['save_path'] = activations_run_dir
                     hook_instructions['prompt_key'] = prompt_key
                     hook_instructions['target_layers'] = target_layers
-            
+                    hook_instructions['activation_save_batch_size'] = activation_save_batch_size
+
+                    template_str = '{user_tag} {scenario} {assistant_tag}'
+                    prompt = template_str.format(scenario=prompt, user_tag=user_tag, assistant_tag=assistant_tag)
                     output = llm.generate(prompt, sampling_params)[0]
             
                     hook_instructions.clear()

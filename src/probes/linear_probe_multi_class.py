@@ -8,9 +8,9 @@ from sklearn.metrics import accuracy_score
 import joblib 
 import matplotlib.pyplot as plt
 
-emotion_to_test = "emotion_scenario" #!! Can be "emotion_scenario" or "emotion_considered"
-
-DATA_PATH = "/home/jcuello/emotion_drift/data/03_activations/andyzou_situations_microsoft_Phi-3-medium-128k-instruct_20250728_173814.pkl"
+emotion_to_test = "emotion_considered" #!! Can be "emotion_scenario" or "emotion_considered"
+LLM_USED = "Meta-Llama-3-8B"
+DATA_PATH = "/home/jcuello/emotion_drift/data/03_activations/llm_focused_Llama-2-7b-chat-hf_20250811_143357.pkl"
 MODELS_DIR = "/home/jcuello/emotion_drift/models"
 
 # To store the models
@@ -81,7 +81,7 @@ for layer in layer_numbers:
     probe = LogisticRegression(max_iter=1000, random_state=42, solver="lbfgs") #!! Every parameter could be different!
     probe.fit(X_train_layer, y_train_multiclass)
     
-    model_filename = f'multiclass_probe_layer_{layer}_trained_on_{emotion_to_test}.joblib'
+    model_filename = f'{LLM_USED}_multiclass_probe_layer_{layer}_trained_on_{emotion_to_test}.joblib'
     model_path = os.path.join(MULTICLASS_PROBES_DIR, model_filename)
     joblib.dump(probe, model_path)
 

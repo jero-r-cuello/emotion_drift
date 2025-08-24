@@ -216,6 +216,13 @@ def load_dataset(dataset_name, testing=False):
         if testing:
             df_dataset = df_dataset.head(10)
 
+    elif dataset_name == "llm_focused":
+        data_path = os.path.join("data", "01_stimuli", "llm_focused_situations", "llm_focused_situations.csv")
+        df_dataset = pd.read_csv(data_path)
+
+        if testing:
+            df_dataset = df_dataset.head(10)
+
     else:
         raise ValueError(f"Dataset {dataset_name} is not supported.")
     

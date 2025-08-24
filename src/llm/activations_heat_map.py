@@ -97,14 +97,16 @@ import matplotlib.pyplot as plt
 from transformers import AutoConfig
 import os
 
-dataset_used = "andyzou_situations"
-run_to_load = "microsoft_Phi-3-medium-128k-instruct_20250728_173814"
-MODEL_NAME = "microsoft/Phi-3-medium-128k-instruct"
-bin_size = 16
+dataset_used = "llm_focused"
+run_to_load = "Llama-2-7b-chat-hf_20250811_143357"
+MODEL_NAME = "/home/models/Llama-2-7b-chat-hf"
+bin_size = 1
 
 df = pd.read_pickle(f'/home/jcuello/emotion_drift/data/03_activations/{dataset_used}_{run_to_load}.pkl')
 os.makedirs("/home/jcuello/emotion_drift/figures/activation_heat_maps", exist_ok=True)
 fig_filename = f'/home/jcuello/emotion_drift/figures/activation_heat_maps/{dataset_used}_activations_{bin_size}_bins_{run_to_load}.png'
+
+df.rename(columns={"emotion_considered":"emotion_scenario"},inplace=True) #!! Easier somethimes, I have to organise the code
 
 # Model config and data specs
 config = AutoConfig.from_pretrained(MODEL_NAME)

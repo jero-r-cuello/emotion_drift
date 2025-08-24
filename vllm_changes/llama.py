@@ -58,6 +58,39 @@ from .utils import (AutoWeightsLoader, PPMissingLayer, extract_layer_index,
                     maybe_prefix)
 
 
+############# START OF THE ADDED FUNCTION #############
+def _save_activations_in_batches(gpu_buffer, save_path, prompt_key, batch_size):
+    """
+    Moves tensors from GPU to CPU and saves them to disk in batches.
+    """
+    if not gpu_buffer:
+        return
+
+    print(f"\n[vLLM HOOK] Processing {len(gpu_buffer)} captured activations for '{prompt_key}' with batch size {batch_size}.")
+    
+    cpu_buffer = []
+    for i, (layer_idx, tensor_gpu) in enumerate(gpu_buffer):
+        # 1. Mover tensor a la CPU y añadirlo al buffer de CPU
+        cpu_buffer.append((layer_idx, tensor_gpu.cpu()))
+
+        is_last_item = (i + 1) == len(gpu_buffer)
+        # 2. Comprobar si el buffer de CPU está lleno o si es el último tensor
+        if len(cpu_buffer) >= batch_size or is_last_item:
+            # 3. Guardar el lote de tensores del buffer de CPU
+            try:
+                # print(f"[vLLM HOOK] Saving batch of {len(cpu_buffer)} activations...")
+                for l_idx, t_cpu in cpu_buffer:
+                    filepath = os.path.join(save_path, f"{prompt_key}_layer_{l_idx}.pt")
+                    torch.save(t_cpu, filepath)
+                
+                # 4. Limpiar el buffer de CPU para el siguiente lote
+                cpu_buffer.clear()
+            except Exception as e:
+                print(f"[ERROR EN HOOK vLLM] Could not save activation batch for {prompt_key}: {e}")
+    print(f"[vLLM HOOK] Finished saving all activations for '{prompt_key}'.\n")
+
+############# END OF THE ADDED FUNCTION #############
+
 class LlamaMLP(nn.Module):
 
     def __init__(
@@ -387,52 +420,64 @@ class LlamaModel(nn.Module):
             hidden_states = intermediate_tensors["hidden_states"]
             residual = intermediate_tensors["residual"]
 
+        # --- INICIO DE LA LÓGICA REFACTORIZADA ---
+
+        # Inicializar listas una sola vez, fuera del bucle.
         aux_hidden_states = []
+        gpu_buffer = []
+
+        # Comprobar si los hooks están activos para esta ejecución
+        hooks_are_active = ACTIVATION_HOOKS and hidden_states.shape[0] > 1
+        target_layers = ACTIVATION_HOOKS.get('target_layers', []) if hooks_are_active else []
+
+        # BUCLE ÚNICO para procesar todas las capas
         for idx, layer in enumerate(
                 self.layers[self.start_layer:self.end_layer]):
             
-#            # Comprueba si el índice está en nuestro almacén global importado
-#            if idx in ACTIVATION_HOOKS: #!! Added
-#                # Clona el tensor y guárdalo en la lista del almacén
-#                activation_tensor = hidden_states.clone().detach().cpu() #!! Added
-#                ACTIVATION_HOOKS[idx].append(activation_tensor) #!! Added
-            if ACTIVATION_HOOKS: #!! Added
-                # Añadimos una condición para guardar SOLO durante la fase de Prefill
-                # (cuando se procesa más de un token a la vez).
-                if hidden_states.shape[0] > 1: #!! Added
-                    target_layers = ACTIVATION_HOOKS.get('target_layers', []) #!! Added
-                    if idx in target_layers: #!! Added
-                        try: #!! Added
-                            save_path = ACTIVATION_HOOKS['save_path'] #!! Added
-                            prompt_key = ACTIVATION_HOOKS['prompt_key'] #!! Added
-                            
-                            # Ahora este tensor SÍ tendrá la forma (num_tokens_prompt, hidden_size)
-                            activation_tensor = hidden_states.clone().detach().cpu() #!! Added
+            # 1. Lógica de captura de activaciones (si aplica)
+            if hooks_are_active and idx in target_layers:
+                activation_tensor_gpu = hidden_states.clone().detach()
+                gpu_buffer.append((idx, activation_tensor_gpu))
 
-                            filepath = os.path.join(save_path, f"{prompt_key}_layer_{idx}.pt") #!! Added
-                            torch.save(activation_tensor, filepath) #!! Added
-
-                        except Exception as e: #!! Added
-                            print(f"[ERROR EN HOOK vLLM] No se pudo guardar la activación de la capa {idx}: {e}") #!! Added
-
+            # 2. Lógica de estados ocultos auxiliares (si aplica)
             if idx in self.aux_hidden_state_layers:
-                aux_hidden_states.append(hidden_states + residual)
+                # En la primera iteración, residual es None. Hay que manejarlo.
+                if residual is None:
+                    aux_hidden_states.append(hidden_states)
+                else:
+                    aux_hidden_states.append(hidden_states + residual)
+
+            # 3. Ejecutar la capa (SIEMPRE se ejecuta, indentación correcta)
             hidden_states, residual = layer(positions, hidden_states, residual)
 
+        # --- FIN DEL BUCLE ---
 
+        # Después del bucle, procesar y guardar las activaciones acumuladas
+        if hooks_are_active and gpu_buffer:
+            try:
+                save_path = ACTIVATION_HOOKS['save_path']
+                prompt_key = ACTIVATION_HOOKS['prompt_key']
+                batch_size = ACTIVATION_HOOKS.get('activation_save_batch_size', 1)
+                
+                _save_activations_in_batches(gpu_buffer, save_path, prompt_key, batch_size)
+            except Exception as e:
+                print(f"[ERROR EN HOOK vLLM] Failed during batched activation saving: {e}")
+
+        # --- FIN DE LA LÓGICA REFACTORIZADA ---
 
         if not get_pp_group().is_last_rank:
             return IntermediateTensors({
                 "hidden_states": hidden_states,
                 "residual": residual
             })
-
+        
+        # Esta línea ahora recibirá las variables correctas
         hidden_states, _ = self.norm(hidden_states, residual)
 
         if len(aux_hidden_states) > 0:
             return hidden_states, aux_hidden_states
         return hidden_states
-
+    
     def load_weights(self, weights: Iterable[tuple[str,
                                                    torch.Tensor]]) -> set[str]:
         stacked_params_mapping = [

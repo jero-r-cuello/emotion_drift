@@ -8,7 +8,7 @@ import re
 # Cambia estas rutas para que coincidan con la ubicación de tus archivos.
 
 # Ruta a tu archivo .pkl
-ruta_pkl = '/home/jcuello/emotion_drift/data/03_activations/andyzou_situations_microsoft_Phi-3-medium-128k-instruct_20250728_173814.pkl'
+ruta_pkl = '/home/jcuello/emotion_drift/data/03_activations/andyzou_rep_eng_Meta-Llama-3-8B_20250805_212747.pkl'
 
 # Ruta a la carpeta que contiene los archivos emocion.json
 ruta_json_folder = '/home/jcuello/emotion_drift/data/01_stimuli/andyzou_situations_dataset'
@@ -90,10 +90,8 @@ try:
     print("\nConteo de valores para la nueva columna 'emotion_scenario':")
     print(df['emotion_scenario'].value_counts())
 
-    # Opcional: Guardar el DataFrame modificado en un nuevo archivo
-    # df.to_pickle('tu_archivo_modificado.pkl')
-    # df.to_csv('tu_archivo_modificado.csv', index=False)
-    # print("\nDataFrame modificado guardado.")
+    df.to_pickle(ruta_pkl)
+    print("\nDataFrame modificado guardado.")
 
 except FileNotFoundError:
     print(f"Error: No se pudo encontrar el archivo .pkl en: {ruta_pkl}")
