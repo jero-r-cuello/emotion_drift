@@ -168,7 +168,7 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations", datas
         return f'{safe_model_name}_{timestamp}' # Safe name of the run
         
 if __name__ == "__main__":
-    MODEL_NAME = "/home/models/Meta-Llama-3-8B" #!! For now, this script only works with models that use vllm/model_executor/models/llama.py
+    MODEL_NAME = "/home/models/Llama-2-7b-chat-hf" #!! For now, this script only works with models that use vllm/model_executor/models/llama.py
     
     config = AutoConfig.from_pretrained(MODEL_NAME)
     num_layers = config.num_hidden_layers
@@ -177,6 +177,6 @@ if __name__ == "__main__":
 
     generate(model_name=MODEL_NAME,
              target_layers=TARGET_LAYERS,
-             dataset_name="andyzou_rep_eng", #!! Change this to the dataset you want to use.
-             dataset_testing=True,
+             dataset_name="generated_prompts", #!! Change this to the dataset you want to use.
+             dataset_testing=False,
              resume_run=False)

@@ -206,9 +206,9 @@ def load_dataset(dataset_name, testing=False):
 
         if testing:
             return prompt_data[:10]
-        
-
+    
         return prompt_data
+    
     elif dataset_name == "out_of_domain":
         data_path = os.path.join("data", "01_stimuli", "testing_out_of_domain", "out_of_domain.csv")
         df_dataset = pd.read_csv(data_path)
@@ -219,6 +219,16 @@ def load_dataset(dataset_name, testing=False):
     elif dataset_name == "llm_focused":
         data_path = os.path.join("data", "01_stimuli", "llm_focused_situations", "llm_focused_situations.csv")
         df_dataset = pd.read_csv(data_path)
+
+        if testing:
+            df_dataset = df_dataset.head(10)
+
+    elif dataset_name == "generated_prompts":
+        data_path = os.path.join("data", "01_stimuli", "generated_prompts", "generated_emotional_prompts_batched_update-disgust.csv")
+        df_dataset = pd.read_csv(data_path)
+        df_dataset.rename(columns={"generated_prompt":"situation","emotion_target":"emotion"},inplace=True)
+        mask_to_drop = df_dataset['situation'].str.startswith('JSON Decode Error', na=False)
+        df_dataset = df_dataset[~mask_to_drop].reset_index(drop=True)
 
         if testing:
             df_dataset = df_dataset.head(10)

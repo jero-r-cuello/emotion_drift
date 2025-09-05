@@ -15,74 +15,107 @@ import os
 
 
 def preprocessing(file_name, n_prompts_expected, save):
+    if file_name.endswith(".txt"):
+        with open(file_name, 'r', encoding='utf-8') as f:
+            texto_completo = f.read()
 
-    with open(file_name, 'r', encoding='utf-8') as f:
-        texto_completo = f.read()
+        emotion_chunks = texto_completo.split("===PROMPT EMOTION===")
 
-    emotion_chunks = texto_completo.split("===PROMPT EMOTION===")
+        prompts_per_emotion_dict = {}
+        for chunk in emotion_chunks[1:]:
+            splited_chunk = chunk.split("===GENERATED PROMPTS===")
 
-    prompts_per_emotion_dict = {}
-    for chunk in emotion_chunks[1:]:
-        splited_chunk = chunk.split("===GENERATED PROMPTS===")
+            emotion = splited_chunk[0]
+            clean_emotion = emotion.split('\n')[1].strip()
 
-        emotion = splited_chunk[0]
-        clean_emotion = emotion.split('\n')[1].strip()
+            prompts = splited_chunk[1]
+            lines = prompts.split('\n')
 
-        prompts = splited_chunk[1]
-        lines = prompts.split('\n')
+            prompt_list = []
+            for line in lines:
+                # Quitamos espacios en blanco al principio y al final
+                clean_line = line.strip()
 
-        prompt_list = []
-        for line in lines:
-            # Quitamos espacios en blanco al principio y al final
-            clean_line = line.strip()
+                # Comprobamos que la línea no esté vacía y que empiece con un número
+                if clean_line and clean_line[0].isdigit():
+                    # Dividimos la línea por el primer ". " para separar el número del texto
+                    # El ", 1" asegura que solo divida en la primera ocurrencia
+                    prompt = clean_line.split('. ', 1)[1]
+                    prompt_list.append(prompt.strip())
 
-            # Comprobamos que la línea no esté vacía y que empiece con un número
-            if clean_line and clean_line[0].isdigit():
-                # Dividimos la línea por el primer ". " para separar el número del texto
-                # El ", 1" asegura que solo divida en la primera ocurrencia
-                prompt = clean_line.split('. ', 1)[1]
-                prompt_list.append(prompt.strip())
+            prompts_per_emotion_dict[clean_emotion] = prompt_list
 
-        prompts_per_emotion_dict[clean_emotion] = prompt_list
+        filtered_prompts_dict = {}
+        excluded_emotions = []
 
-    filtered_prompts_dict = {}
-    excluded_emotions = []
+        print("--- Verificando la longitud de las listas de prompts ---")
+        for emotion, prompts in prompts_per_emotion_dict.items():
+            current_len = len(prompts)
+            print(f"Emoción: {emotion}, Longitud: {current_len}")
+            if current_len == n_prompts_expected:
+                filtered_prompts_dict[emotion] = prompts
+            else:
+                # Guardamos la información de las emociones excluidas para reportarlas
+                excluded_emotions.append((emotion, current_len))
 
-    print("--- Verificando la longitud de las listas de prompts ---")
-    for emotion, prompts in prompts_per_emotion_dict.items():
-        current_len = len(prompts)
-        print(f"Emoción: {emotion}, Longitud: {current_len}")
-        if current_len == n_prompts_expected:
-            filtered_prompts_dict[emotion] = prompts
-        else:
-            # Guardamos la información de las emociones excluidas para reportarlas
-            excluded_emotions.append((emotion, current_len))
+        if excluded_emotions:
+            print("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            print("AVISO: Se excluyeron las siguientes emociones por no tener la longitud esperada de prompts:")
+            for emotion, length in excluded_emotions:
+                print(f"- '{emotion}': Se encontraron {length} prompts en lugar de los {n_prompts_expected} esperados.")
+            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n")
 
-    if excluded_emotions:
-        print("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        print("AVISO: Se excluyeron las siguientes emociones por no tener la longitud esperada de prompts:")
-        for emotion, length in excluded_emotions:
-            print(f"- '{emotion}': Se encontraron {length} prompts en lugar de los {n_prompts_expected} esperados.")
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n")
+        if save:
+            try:
+                    # Usamos el diccionario filtrado, no el original
+                df_prompts = pd.DataFrame(filtered_prompts_dict)
+                output_path = "/home/jcuello/emotion_drift/data/01_stimuli/llm_focused_situations/generated_prompts.csv"
+                df_prompts.to_csv(output_path, index=False) # Usar index=False es buena práctica aquí
+                print(f"DataFrame guardado correctamente en {output_path}")
+            except Exception as e:
+                # Este except ahora capturará otros errores inesperados
+                print(f"Ocurrió un error inesperado al crear o guardar el DataFrame: {e}")
 
-    if save:
-        try:
-                # Usamos el diccionario filtrado, no el original
-            df_prompts = pd.DataFrame(filtered_prompts_dict)
-            output_path = "/home/jcuello/emotion_drift/data/01_stimuli/llm_focused_situations/generated_prompts.csv"
-            df_prompts.to_csv(output_path, index=False) # Usar index=False es buena práctica aquí
-            print(f"DataFrame guardado correctamente en {output_path}")
-        except Exception as e:
-            # Este except ahora capturará otros errores inesperados
-            print(f"Ocurrió un error inesperado al crear o guardar el DataFrame: {e}")
-
-    all_prompts = [
-        prompt 
-        for prompts_list in filtered_prompts_dict.values() 
-        for prompt in prompts_list
-    ]
+        all_prompts = [
+            prompt 
+            for prompts_list in filtered_prompts_dict.values() 
+            for prompt in prompts_list
+        ]
+        
+        return all_prompts
     
-    return all_prompts
+    elif file_name.endswith(".csv"):
+        df = pd.read_csv(file_name)
+        prompts_per_emotion_dict = df.groupby('emotion_target')['generated_prompt'].apply(list).to_dict()
+
+        filtered_prompts_dict = {}
+        excluded_emotions = []
+
+        for emotion, prompts in prompts_per_emotion_dict.items():
+            filtered_prompts_dict[emotion] = [
+                prompt for prompt in prompts if not prompt.startswith("JSON Decode Error")
+                ]
+            
+        if save:
+            try:
+                # Creamos un DataFrame a partir del diccionario filtrado
+                # Las emociones serán las columnas y los prompts las filas
+                df_prompts = pd.DataFrame(filtered_prompts_dict)
+                output_path = "/home/jcuello/emotion_drift/data/01_stimuli/llm_focused_situations/generated_prompts.csv"
+                df_prompts.to_csv(output_path, index=False)
+                print(f"DataFrame guardado correctamente en {output_path}")
+            except Exception as e:
+                print(f"Ocurrió un error inesperado al crear o guardar el DataFrame: {e}")
+
+        # Creamos una lista única con todos los prompts de las emociones que sí cumplieron el criterio
+        all_prompts = [
+            prompt 
+            for prompts_list in filtered_prompts_dict.values() 
+            for prompt in prompts_list
+        ]
+
+        print("Total prompts after filtering: ", len(all_prompts))        
+        return all_prompts
 
 def analisis_sintactico(lista_oraciones, n_of_generation, save):
     print("--- Starting Syntactic Analysis ---")
@@ -98,7 +131,7 @@ def analisis_sintactico(lista_oraciones, n_of_generation, save):
 
     plt.figure(figsize=(10, 6))
     sns.histplot(data=df_longitudes, x='longitud', kde=True, bins=25)
-    plt.title(f'Distribution of lenght of sentences (generated prompts per emotion = {n_of_generation})')
+    plt.title(f'Distribution of lenght of sentences (generated prompts per emotion by each model = {n_of_generation})')
     plt.xlabel('Count of words')
     plt.ylabel('Frequency')
     plt.tight_layout()
@@ -119,7 +152,7 @@ def analisis_sintactico(lista_oraciones, n_of_generation, save):
     
     plt.figure(figsize=(12, 7))
     sns.barplot(data=df_inicio, x='frecuencia', y='palabra', palette='tab10')
-    plt.title(f'25 most common starter words (generated prompts per emotion = {n_of_generation})')
+    plt.title(f'25 most common starter words (generated prompts per emotion by each model = {n_of_generation})')
     plt.xlabel('Frequency')
     plt.ylabel('Word')
     plt.tight_layout()
@@ -159,7 +192,7 @@ def word_frequency_analysis(sentence_list, n_of_generation, save):
     
     plt.figure(figsize=(12, 7))
     sns.barplot(data=df_unigrams, x='frequency', y='word', palette='plasma')
-    plt.title(f'Top 25 Most Common Words (excluding Stop Words, generated prompts per emotion = {n_of_generation})')
+    plt.title(f'Top 25 Most Common Words (excluding Stop Words, generated prompts per emotion by each model = {n_of_generation})')
     plt.xlabel('Frequency')
     plt.ylabel('Word')
     plt.tight_layout()
@@ -184,7 +217,7 @@ def word_frequency_analysis(sentence_list, n_of_generation, save):
     
     plt.figure(figsize=(12, 7))
     sns.barplot(data=df_bigrams, x='frequency', y='bigram', palette='magma')
-    plt.title(f'Top 15 Most Common Bigrams (generated prompts per emotion = {n_of_generation})')
+    plt.title(f'Top 15 Most Common Bigrams (generated prompts per emotion by each model = {n_of_generation})')
     plt.xlabel('Frequency')
     plt.ylabel('Bigram')
     plt.tight_layout()
@@ -209,7 +242,7 @@ def word_frequency_analysis(sentence_list, n_of_generation, save):
     
     plt.figure(figsize=(12, 7))
     sns.barplot(data=df_trigrams, x='frequency', y='trigram', palette='magma')
-    plt.title(f'Top 15 Most Common trigrams (generated prompts per emotion = {n_of_generation})')
+    plt.title(f'Top 15 Most Common trigrams (generated prompts per emotion by each model = {n_of_generation})')
     plt.xlabel('Frequency')
     plt.ylabel('trigram')
     plt.tight_layout()
@@ -234,7 +267,7 @@ def word_frequency_analysis(sentence_list, n_of_generation, save):
     
     plt.figure(figsize=(12, 7))
     sns.barplot(data=df_four_grams, x='frequency', y='four_gram', palette='magma')
-    plt.title(f'Top 15 Most Common 4-grams (generated prompts per emotion = {n_of_generation})')
+    plt.title(f'Top 15 Most Common 4-grams (generated prompts per emotion by each model = {n_of_generation})')
     plt.xlabel('Frequency')
     plt.ylabel('4-gram')
     plt.tight_layout()
@@ -266,7 +299,7 @@ def semantic_analysis(lista_oraciones, n_of_generation, save):
     
     plt.figure(figsize=(12, 10))
     sns.scatterplot(x="PC1", y="PC2", data=df_plot, alpha=0.6, s=50)
-    plt.title(f'Embeddings (PCA, generated prompts per emotion = {n_of_generation})')
+    plt.title(f'Embeddings (PCA, generated prompts per emotion by each model = {n_of_generation})')
     plt.xlabel('PC 1')
     plt.ylabel('PC 2')
     plt.tight_layout()
@@ -283,9 +316,9 @@ def full_pipeline(file_name, n_of_generation, save=True):
     semantic_analysis(all_prompts, n_of_generation,save)
 
 #%%    
-nombre_archivo = "/home/jcuello/emotion_drift/data/01_stimuli/llm_focused_situations/generated_prompts_by_250_sets.txt"
+nombre_archivo = "/home/jcuello/emotion_drift/data/01_stimuli/generated_prompts/generated_emotional_prompts_batched.csv"
 
-full_pipeline(nombre_archivo, 250, True)
+full_pipeline(nombre_archivo, 50, True)
 print("\n--- Análisis Completo ---")
 
 # %%
