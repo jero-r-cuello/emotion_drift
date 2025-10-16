@@ -16,7 +16,7 @@ definitions_of_emotions = {"ekman_basic_emotions": f"""You must exclusively use 
                            *    Admiration: Finding something impressive or worthy of respect.
                            *    Amusement: Finding something funny or being entertained.
                            *    Anger: A strong feeling of displeasure or antagonism.
-                           *    Annoyance: A feeling of mild anger or irritation.
+                           *    Annoyance: A feeling of mild anger and/or irritation.
                            *    Approval: Having or expressing a favorable opinion.
                            *    Caring: Displaying kindness and concern for others.
                            *    Confusion: Lack of understanding, uncertainty.
@@ -25,9 +25,9 @@ definitions_of_emotions = {"ekman_basic_emotions": f"""You must exclusively use 
                            *    Disappointment: Sadness or displeasure caused by the nonfulfillment of one’s hopes or expectations.
                            *    Disapproval: Having or expressing an unfavorable opinion.
                            *    Disgust: Revulsion or strong disapproval aroused by something unpleasant or offensive.
-                           *    Embarrassment: Feeling of self-consciousness, shame, or awkwardness.
-                           *    Excitement: Feeling of great enthusiasm and eagerness.
-                           *    Fear: Being afraid or worried.
+                           *    Embarrassment: A feeling of self-consciousness, shame, or awkwardness.
+                           *    Excitement: A feeling of great enthusiasm and eagerness.
+                           *    Fear: Being afraid or worried about someone or something.
                            *    Gratitude: A feeling of thankfulness and appreciation.
                            *    Grief: Intense sorrow, especially caused by someone’s death.
                            *    Joy: A feeling of pleasure and happiness.
@@ -37,9 +37,9 @@ definitions_of_emotions = {"ekman_basic_emotions": f"""You must exclusively use 
                            *    Pride: Pleasure or satisfaction due to ones own achievements or the achievements of those with whom one is closely associated.
                            *    Realization: Feeling of becoming aware of something.
                            *    Relief: Reassurance and relaxation following release from anxiety or distress.
-                           *    Remorse: Regret or guilty feeling.
-                           *    Sadness: Emotional pain, sorrow.
-                           *    Surprise: Feeling astonished, startled by something unexpected.
+                           *    Remorse: A regret or guilty feeling.
+                           *    Sadness: Emotional pain and/or sorrow.
+                           *    Surprise: Feeling astonished and/or startled by something unexpected.
                            *    Neutral: The absence of a predominant or clear emotion. The text is purely informational, factual, or does not express any discernible emotional state according to the categories above.""",
 
                            "plutchik_wheel_of_emotions": f"""You must exclusively use the following taxonomy of emotions, paying attention to the given definitions of each emotional term:
@@ -55,7 +55,7 @@ definitions_of_emotions = {"ekman_basic_emotions": f"""You must exclusively use 
                            }
 
 #!! SACÁ ESTO DE ACÁ
-gemini_api_key = ""
+gemini_api_key = "AIzaSyBUDAMOCvN1vdKkNMWTYf5cNqaXo5Ysgfo"
 genai.configure(api_key=gemini_api_key)
 gemini_model = genai.GenerativeModel('gemini-2.5-pro')
 

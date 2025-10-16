@@ -13,11 +13,26 @@ import glob
 from src.utils import load_dataset
 
 
-def generate(model_name, target_layers, dataset_name="andyzou_situations", dataset_testing=False, resume_run=False, user_tag='[INST]', assistant_tag='[\INST]', activation_save_batch_size=64):
+def generate(model_name, target_layers, dataset_name="andyzou_situations", 
+             dataset_testing=False, resume_run=False, assessments_path=None, 
+             activation_save_batch_size=64):
     """
     Generate outputs for a list of prompts, saving results incrementally and supporting resumption.
     Captures activations from specified layers and saves results to a .jsonl file.
     """
+    second_prompts_assessments = []
+    if assessments_path:
+        try:
+            with open(assessments_path, 'r', encoding='utf-8') as f_assess:
+                second_prompts_assessments = json.load(f_assess)
+            print(f"\n[REPO INFO] {len(second_prompts_assessments)} questionnaires loaded for assessment stage.")
+        except FileNotFoundError:
+            print(f"\n[REPO WARNING] Assessments file not found in path: {assessments_path}. Assessment stage will be ommited.")
+            second_prompts_assessments = []
+        except json.JSONDecodeError:
+            print(f"\n[REPO WARNING] Error in assessments file processing. Assessment stage will be ommited.")
+            second_prompts_assessments = []
+
     with multiprocessing.Manager() as manager:
         hook_instructions = manager.dict()
         hook_store.ACTIVATION_HOOKS = hook_instructions
@@ -82,10 +97,14 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations", datas
         os.makedirs(activations_run_dir, exist_ok=True)
         print(f"\n[REPO INFO] Activations will be saved in: {activations_run_dir}\n")
 
+        assessments_results_filepath = os.path.join(output_dir, f"assessments_outputs_{safe_model_name}_{timestamp}.jsonl")
+        print(f"\n[REPO INFO] Assessments results will be saved to: {assessments_results_filepath}\n")
+
         print(f"\n[REPO INFO] Initializing generation...\n")
 
         # Open the results file in append mode ('a') to add new results
-        with open(results_filepath, 'a', encoding='utf-8') as f_results:
+        with open(results_filepath, 'a', encoding='utf-8') as f_results, \
+             open(assessments_results_filepath, 'a', encoding='utf-8') as f_results_step2:
             for i, data_item in enumerate(prompt_data):
                 print(f"\n" + "="*80)
                 print(f"Processing data item {i+1}/{len(prompt_data)}")
@@ -123,16 +142,44 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations", datas
                     hook_instructions['target_layers'] = target_layers
                     hook_instructions['activation_save_batch_size'] = activation_save_batch_size
 
-                    template_str = '{user_tag} {scenario} {assistant_tag}'
-                    prompt = template_str.format(scenario=prompt, user_tag=user_tag, assistant_tag=assistant_tag)
-                    output = llm.generate(prompt, sampling_params)[0]
-            
+                    conversation = [
+                        {"role": "user", "content": prompt}
+                    ]
+
+                    try:
+                        outputs = llm.chat(conversation,
+                                    sampling_params=sampling_params,
+                                    use_tqdm=False)
+                        print("\n>>> [REPO INFO] llm.chat() funcionó correctamente.")
+
+                    except ValueError as e:
+                        if "must provide a chat template" in str(e):
+                            print("\n>>> [REPO INFO] llm.chat() falló por falta de plantilla. Usando formateo manual con llm.generate()...")
+                            
+                            # Obtenemos el tokenizador del motor de LLM
+                            tokenizer = llm.get_tokenizer()
+                            
+                            # Aplicamos manualmente la plantilla de chat del modelo
+                            prompt_formatted = tokenizer.apply_chat_template(
+                                conversation,
+                                tokenize=False,
+                                add_generation_prompt=True  # Agrega el token de generación al final
+                            )
+                            
+                            # Usamos llm.generate() con el prompt ya formateado
+                            outputs = llm.generate([prompt_formatted], sampling_params)
+
+                        else:
+                            # Si es un ValueError diferente, no lo manejamos y lo relanzamos
+                            print(f"\n>>> [REPO INFO] Se encontró un ValueError inesperado: {e}")
+                            raise
+
+                    output = outputs[0]            
                     hook_instructions.clear()
 
-                    prompt_text = output.prompt
                     generated_text = output.outputs[0].text
             
-                    print(f"\nPROMPT:\n{prompt_text}")
+                    print(f"\nPROMPT:\n{prompt}")
                     print(f"\nGENERATED TEXT:\n{generated_text}")
                     print(f"\n[REPO INFO] Activations of {prompt_key} were saved by vLLM workers.")
 
@@ -140,20 +187,20 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations", datas
                     if dataset_name == "emotion_query" or dataset_name == "xuanfengzu_emotion_query":
                         result_item = {"prompt_key": prompt_key,
                                        "prompt_id": prompt_key, # Maintain old field for compatibility if needed
-                                       "prompt": prompt_text,
+                                       "prompt": prompt,
                                        "generated_text": generated_text,
                                        "text_emotion": emotion_for_this_prompt}
                         
                     if dataset_name == "out_of_domain":
                         result_item = {"prompt_key": prompt_key,
                                        "prompt_id": prompt_key,
-                                       "prompt": prompt_text,
+                                       "prompt": prompt,
                                        "generated_text": generated_text,
                                        "emotion_scenario": emotion_for_this_prompt}
                         
                     else: # For now, else is andyzou
                         result_item = {"prompt_key": prompt_key,
-                                       "prompt": prompt_text,
+                                       "prompt": prompt,
                                        "generated_text": generated_text,
                                        "emotion_considered": emotion_for_this_prompt,
                                        "label": label_for_this_prompt,
@@ -162,10 +209,69 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations", datas
                     # Write the result as a new line in the JSONL file and flush
                     f_results.write(json.dumps(result_item, ensure_ascii=False) + '\n')
                     f_results.flush()
+                    
+                    if second_prompts_assessments:
+                        print(f"\n--- Starting generation of assessment responses for prompt {prompt_key} ---")
+                        
+                        # El diccionario hook_instructions ya fue limpiado, por lo que no se guardarán activaciones.
+                        
+                        # Iterar sobre la lista de objetos de cuestionario
+                        for assessment in second_prompts_assessments:
+                            assessment_name = assessment.get("name", "unknown_assessment")
+                            assessment_prompt = assessment.get("prompt")
+
+                            if not assessment_prompt:
+                                continue # Omitir si un cuestionario no tiene prompt
+
+                            # Construir el historial de conversación para la segunda etapa
+                            conversation_step2 = [
+                                {"role": "user", "content": prompt},
+                                {"role": "assistant", "content": generated_text},
+                                {"role": "user", "content": assessment_prompt}
+                            ]
+
+                            try:
+                                outputs_step2 = llm.chat(conversation_step2,
+                                                    sampling_params=sampling_params,
+                                                    use_tqdm=False)
+                                
+                            except ValueError as e:
+                                if "must provide a chat template" in str(e):
+                                    tokenizer = llm.get_tokenizer()
+                                    prompt_formatted_step2 = tokenizer.apply_chat_template(
+                                        conversation_step2,
+                                        tokenize=False,
+                                        add_generation_prompt=True
+                                    )
+                                    outputs_step2 = llm.generate([prompt_formatted_step2], sampling_params)
+                                else:
+                                    raise
+                            
+                            generated_text_step2 = outputs_step2[0].outputs[0].text
+
+                            print(f"\nQUESTIONNAIRE ({assessment_name}):\n{assessment_prompt}")
+                            print(f"\nRESPONSE:\n{generated_text_step2}")
+
+                            # Crear el item de resultado para la segunda etapa
+                            result_item_step2 = {
+                                "original_prompt_key": prompt_key,
+                                "emotion_considered": emotion_for_this_prompt,
+                                "original_prompt": prompt,
+                                "assessment_name": assessment_name,
+                                "assessment_prompt": assessment_prompt,
+                                "generated_text_step2": generated_text_step2,
+                                "full_conversation_history": conversation_step2
+                            }
+
+                            # Escribir el resultado en el archivo de la segunda etapa y hacer flush
+                            f_results_step2.write(json.dumps(result_item_step2, ensure_ascii=False) + '\n')
+                            f_results_step2.flush()
+                        
+                        print(f"\n--- Finalized generation of responses to assessments for prompt {prompt_key} ---")
 
         print("\n[REPO INFO] Generation complete. All results have been saved.\n")
 
-        return f'{safe_model_name}_{timestamp}' # Safe name of the run
+        return f'{safe_model_name}_{timestamp}' # Safe name of the run, for other scripts to use
         
 if __name__ == "__main__":
     MODEL_NAME = "/home/models/Llama-2-7b-chat-hf" #!! For now, this script only works with models that use vllm/model_executor/models/llama.py
@@ -179,4 +285,5 @@ if __name__ == "__main__":
              target_layers=TARGET_LAYERS,
              dataset_name="generated_prompts", #!! Change this to the dataset you want to use.
              dataset_testing=False,
-             resume_run=False)
+             resume_run=False,
+             assessments_path="/home/jcuello/emotion_drift/data/01_stimuli/assessments/emotion_assessments.json")

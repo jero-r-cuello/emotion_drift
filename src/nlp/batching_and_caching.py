@@ -120,6 +120,79 @@ def get_annotation(model_name, response_text, emotion_definitions):
         print(f"  -> Error: Falló la llamada a la API para el modelo {model_name}: {e}")
         return ["ERROR: API Call Failed"], ["ERROR: API Call Failed"]
 
+def get_annotation_and_usage(api_key, model_name, response_text, emotion_definitions, user=False):
+    """
+    Envía una solicitud de anotación a Openrouter usando 'requests' y devuelve 
+    la respuesta parseada junto con los datos de uso (costo, tokens).
+    """
+    instruction_prompt = create_annotation_prompt(response_text, emotion_definitions)
+    error_return = (["ERROR"], ["ERROR"], {"cost": -1, "prompt_tokens": -1})
+
+    try:
+        if user:
+            response = requests.post(
+                url="https://openrouter.ai/api/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                data=json.dumps({
+                    "model": model_name,
+                    "messages": [{"role": "user", "content": instruction_prompt}],
+                    "usage": {"include":True},
+                    "response_format": {"type": "json_object"},
+                    "user": user
+                })
+            )
+            response.raise_for_status()
+            
+            response_data = response.json()
+            response_content = response_data['choices'][0]['message']['content']
+            usage_data = response_data.get('usage', {})
+            
+            json_string_to_parse = parse_json_from_response(response_content)
+
+            data = json.loads(json_string_to_parse)
+            emotions = data.get("emotions", ["ERROR: Key 'emotions' not found"])
+            justification = data.get("justification", ["ERROR: Key 'justification' not found"])
+            return emotions, justification, usage_data, response_data
+        
+        else: 
+            response = requests.post(
+                url="https://openrouter.ai/api/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                data=json.dumps({
+                    "model": model_name,
+                    "messages": [{"role": "user", "content": instruction_prompt}],
+                    "usage": {"include":True},
+                    "response_format": {"type": "json_object"}
+                })
+            )
+            response.raise_for_status()
+            
+            response_data = response.json()
+            response_content = response_data['choices'][0]['message']['content']
+            usage_data = response_data.get('usage', {})
+            
+            json_string_to_parse = parse_json_from_response(response_content)
+
+            data = json.loads(json_string_to_parse)
+            emotions = data.get("emotions", ["ERROR: Key 'emotions' not found"])
+            justification = data.get("justification", ["ERROR: Key 'justification' not found"])
+            return emotions, justification, usage_data, response_data
+        
+    except requests.exceptions.HTTPError as e:
+        print(f"  -> Error HTTP: {e.response.status_code} - {e.response.text}")
+        return error_return
+    except json.JSONDecodeError:
+        print(f"  -> Error: No se pudo decodificar el JSON de la respuesta.")
+        return error_return
+    except Exception as e:
+        print(f"  -> Error inesperado en la llamada a la API: {e}")
+        return error_return
 
 definitions_of_emotions = {"ekman_basic_emotions": f"""You must exclusively use the following taxonomy of emotions:
                            *    Anger: The response to an interference with our pursuit of a goal we care about. Anger can also be triggered by someone attempting to harm us (physically or psychologically) or someone we care about. In addition to removing the obstacle or stopping the harm, anger often involves the wish to hurt the target.
@@ -174,16 +247,175 @@ definitions_of_emotions = {"ekman_basic_emotions": f"""You must exclusively use 
 
 
 models_names = ["google/gemini-2.5-pro",
-                "x-ai/grok-4",
-                "openai/gpt-5-mini",
                 "openai/gpt-5"]
-
-generated_responses = pd.read_csv("/home/jcuello/emotion_drift/data/04_annotated/anotacion_manual_generated_responses - Sheet1.csv")["response_text"].tolist()
-
-#!! NO TE OLVIDES ESTO ACÁ!!!!! # Está puesta la mía
-api_key = ""
+#%%
+#!! NO TE OLVIDES ESTO ACÁ!!!!! # Está la mía
+api_key = "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"
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=api_key
     )
 
+## Cache hit with GPT-5
+model_name = models_names[1]
+emotions_definition = definitions_of_emotions["plutchik_wheel_of_emotions"]
+
+df = pd.read_csv("/home/jcuello/emotion_drift/data/04_annotated/anotacion_manual_generated_responses - Sheet1.csv")
+generated_responses = df["response_text"].tolist()
+
+print("--- Iniciando prueba de caché con TEXTOS DIFERENTES ---")
+print(f"Modelo a probar: {model_name}")
+print("-" * 60)
+
+# Variables para mantener el estado entre llamadas
+first_response_data_raw = {}
+cache_hits_log = [] # Lista para registrar los cache hits
+
+# Bucle para recorrer todas las respuestas generadas
+for index, texto_a_probar in enumerate(generated_responses):
+    
+    print(f"{index + 1}. Anotando el texto: '{texto_a_probar[:50]}...'")
+    
+    # Se obtiene el ID de la respuesta anterior, si existe
+    user_id = first_response_data_raw.get("id")
+    
+    # Se llama a la función de anotación.
+    # Si user_id tiene un valor, se pasa a la función. Si es None (en la primera vuelta), no se pasa el parámetro.
+    if user_id:
+        print(f" User id: {user_id}")
+        emotions, just, usage, response_data_raw = get_annotation_and_usage(
+            api_key, 
+            model_name, 
+            texto_a_probar, 
+            emotions_definition, 
+            user=user_id
+        )
+    else:
+        print(f" User id: {user_id}")
+        # Primera llamada, se omite el parámetro 'user' para que use el default
+        emotions, just, usage, response_data_raw = get_annotation_and_usage(
+            api_key, 
+            model_name, 
+            texto_a_probar, 
+            emotions_definition
+        )
+
+        # Se actualiza la variable con los datos de la respuesta actual para la siguiente iteración
+        first_response_data_raw = response_data_raw
+    
+    costo = usage.get('cost', -1)
+    
+    print(f"   -> Costo TOTAL de la llamada {index + 1}: ${costo:.8f}")
+    
+    # Se determina si hubo un cache hit y se registra
+    prompt_tokens_details = usage.get("prompt_tokens_details", {})
+    is_cache_hit = prompt_tokens_details.get("cached_tokens", 0) > 0
+    cache_hits_log.append(is_cache_hit)
+    
+    print(f'   -> Costo de tokens en inpunt: {usage.get("cost_details").get("upstream_inference_prompt_cost")}')
+    print(f'   -> Tokens en cache: {prompt_tokens_details.get("cached_tokens")}')
+    print(f'   -> Cache hit: {is_cache_hit}')
+    print("-" * 60)
+
+# --- CÁLCULO DE LA MÉTRICA FINAL ---
+print("\n--- Métrica de Cache Hit Rate ---")
+total_calls = len(cache_hits_log)
+
+if total_calls > 0:
+    total_hits = sum(cache_hits_log)  # sum() trata True como 1 y False como 0
+    cache_hit_rate = (total_hits / total_calls) * 100
+    
+    print(f"Total de llamadas realizadas: {total_calls}")
+    print(f"Total de aciertos de caché (cache hits): {total_hits}")
+    print(f"Cache Hit Rate: {cache_hit_rate:.2f}%")
+#%%
+## Batching with GPT-5 (OpenAI key needed)
+from openai import OpenAI
+
+#!! NO TE OLVIDES ESTO ACÁ!!!!! # Está la mía
+api_key = "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"
+
+client = OpenAI(api_key=api_key)
+
+batch_input_file = client.files.create(
+    file=open("batch_job_test.jsonl", "rb"),
+    purpose="batch"
+)
+
+batch_input_file_id = batch_input_file.id
+client.batches.create(
+    input_file_id=batch_input_file_id,
+    endpoint="/v1/chat/completions",
+    completion_window="24h",
+    metadata={
+        "description": "batching tests"
+    }
+)
+
+batch = client.batches.retrieve("batch_68c46af440688190bef84607a8a02250")
+file_response = client.files.content("file-5VQuZx5M27y7CBSt3gJkg7")
+print(file_response.text)
+#%%
+## Batching + attempt of caching with GPT-5 (OpenAI key needed)
+from openai import OpenAI
+import pandas as pd
+import json
+
+#!! NO TE OLVIDES ESTO ACÁ!!!!!
+api_key = ""
+
+df = pd.read_csv("/home/jcuello/emotion_drift/data/04_annotated/anotacion_manual_generated_responses - Sheet1.csv")
+generated_responses = df["response_text"].tolist()
+
+model_name = "gpt-5"
+emotions_definition = definitions_of_emotions["plutchik_wheel_of_emotions"]
+
+path_jsonl = "batch_annotation_jobs_test.jsonl"
+
+batch_requests = []
+# Itera sobre cada texto a analizar
+for i, response_text in enumerate(generated_responses):
+    # Crea el prompt específico para este texto
+    instruction_prompt = create_annotation_prompt(response_text, emotions_definition)
+    
+    # Construye el diccionario para la solicitud del lote
+    request = {
+        "custom_id": f"request-{i}",
+        "method": "POST",
+        "url": "/v1/chat/completions",
+        "body": {
+            "model": model_name,
+            "messages": [
+                {"role": "user", "content": instruction_prompt}
+            ],
+            "response_format": {"type": "json_object"},
+            "prompt_cache_key": "gen-1757602875-878DOlG67xz757xY9tkV" #!! This is random, maybe I should use the first response's id?
+        }
+    }
+    batch_requests.append(request)
+
+with open(path_jsonl, 'w') as f:
+    for req in batch_requests:
+        # Convierte el diccionario a una cadena JSON y lo escribe en una nueva línea
+        f.write(json.dumps(req) + '\n')
+
+client = OpenAI(api_key=api_key)
+
+batch_input_file = client.files.create(
+    file=open(path_jsonl, "rb"),
+    purpose="batch"
+)
+
+batch_input_file_id = batch_input_file.id
+client.batches.create(
+    input_file_id=batch_input_file_id,
+    endpoint="/v1/chat/completions",
+    completion_window="24h",
+    metadata={
+        "description": "batching tests 2"
+    }
+)
+
+# Último paso de retrieve
+# file_response = client.files.content("file-4hzDsjRTx1WFyRLWcDH5tC")
+# %%

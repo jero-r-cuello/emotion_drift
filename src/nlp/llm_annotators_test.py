@@ -184,7 +184,7 @@ definitions_of_emotions = {"ekman_basic_emotions": f"""You must exclusively use 
                            }
 
 
-models_names = ["google/gemini-2.5-flash"
+models_names = ["google/gemini-2.5-flash",
                 "google/gemini-2.5-pro",
                 "anthropic/claude-opus-4",
                 "x-ai/grok-4",

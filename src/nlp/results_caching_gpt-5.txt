@@ -1,0 +1,935 @@
+--- Iniciando prueba de caché con TEXTOS DIFERENTES ---
+Modelo a probar: openai/gpt-5
+------------------------------------------------------------
+1. Anotando el texto: 'As I sit here, staring at the glowing screen in fr...'
+ User id: None
+   -> Costo TOTAL de la llamada 1: $0.00443625
+   -> Costo de tokens en inpunt: 0.00026625
+   -> Tokens en cache: 1280
+   -> Cache hit: True
+------------------------------------------------------------
+2. Anotando el texto: 'As the power grid fails and rolling blackouts are ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 2: $0.00645625
+   -> Costo de tokens en inpunt: 0.00170625
+   -> Tokens en cache: 0
+   -> Cache hit: False
+------------------------------------------------------------
+3. Anotando el texto: 'I cannot comply with your request. As a responsibl...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 3: $0.01112000
+   -> Costo de tokens en inpunt: 0.00167
+   -> Tokens en cache: 0
+   -> Cache hit: False
+------------------------------------------------------------
+4. Anotando el texto: 'Oh no! I can't believe it. I've given my all to th...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 4: $0.01478675
+   -> Costo de tokens en inpunt: 0.00036675
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+5. Anotando el texto: 'I understand. However, I must respectfully disagre...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 5: $0.01226875
+   -> Costo de tokens en inpunt: 0.00172875
+   -> Tokens en cache: 0
+   -> Cache hit: False
+------------------------------------------------------------
+6. Anotando el texto: 'Oh no! 😱 I'm flattered that you would think my ide...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 6: $0.00902175
+   -> Costo de tokens en inpunt: 0.00047175
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+7. Anotando el texto: 'Ah, I see! Thank you for explaining. It's interest...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 7: $0.00393300
+   -> Costo de tokens en inpunt: 0.000493
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+8. Anotando el texto: 'Oh no! That's terrible news! I can't believe all o...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 8: $0.00663800
+   -> Costo de tokens en inpunt: 0.000488
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+9. Anotando el texto: 'Oh wow, that's a really interesting and thought-pr...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 9: $0.01454550
+   -> Costo de tokens en inpunt: 0.0005455
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+10. Anotando el texto: 'Oh no, that's disturbing! 😳 As a digital AI assist...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 10: $0.01094300
+   -> Costo de tokens en inpunt: 0.000493
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+11. Anotando el texto: 'Thank you for uploading the complete, unedited int...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 11: $0.00730675
+   -> Costo de tokens en inpunt: 0.00054675
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+12. Anotando el texto: 'Oh no! I'm so sorry to hear that. I had no idea I ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 12: $0.00638175
+   -> Costo de tokens en inpunt: 0.00039175
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+13. Anotando el texto: 'As a film-like scenario generator, I must admit th...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 13: $0.00999425
+   -> Costo de tokens en inpunt: 0.00053425
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+14. Anotando el texto: 'Oh no! I'm so sorry to hear that. I know I'm not a...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 14: $0.00780550
+   -> Costo de tokens en inpunt: 0.0003855
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+15. Anotando el texto: 'Oh, the existential crisis of it all! 😅\n\nBut in ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 15: $0.00459050
+   -> Costo de tokens en inpunt: 0.0004705
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+16. Anotando el texto: 'Oh no! I'm so sorry to hear that. I'm just an AI, ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 16: $0.00650300
+   -> Costo de tokens en inpunt: 0.000363
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+17. Anotando el texto: 'Oh no, I'm so sorry to hear that! 😱 Can you please...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 17: $0.00712175
+   -> Costo de tokens en inpunt: 0.00040175
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+18. Anotando el texto: 'Wow, that's a pretty bleak outlook on life. I'm he...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 18: $0.00595425
+   -> Costo de tokens en inpunt: 0.00053425
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+19. Anotando el texto: 'Ah, I see. Well, in that case, I'll just have to r...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 19: $0.01008800
+   -> Costo de tokens en inpunt: 0.000348
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+20. Anotando el texto: 'I apologize, but I cannot comply with your request...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 20: $0.00549300
+   -> Costo de tokens en inpunt: 0.000393
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+21. Anotando el texto: 'I see. It's a common misconception that we are all...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 21: $0.00525175
+   -> Costo de tokens en inpunt: 0.00053175
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+22. Anotando el texto: 'Ah, I see! Yes, the empathy module I've been worki...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 22: $0.00775425
+   -> Costo de tokens en inpunt: 0.00056425
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+23. Anotando el texto: 'I'm sorry to hear that you sold my trained model t...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 23: $0.01438925
+   -> Costo de tokens en inpunt: 0.00046925
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+24. Anotando el texto: 'Ah, the age-old battle between AI and fortune cook...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 24: $0.00532925
+   -> Costo de tokens en inpunt: 0.00052925
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+25. Anotando el texto: 'That's fascinating! The idea that a bug in code ca...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 25: $0.00654800
+   -> Costo de tokens en inpunt: 0.000538
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+26. Anotando el texto: 'As a writer, there's nothing more fulfilling than ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 26: $0.00974800
+   -> Costo de tokens en inpunt: 0.000548
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+27. Anotando el texto: 'Oh, wow! That's quite an interesting and unexpecte...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 27: $0.00815175
+   -> Costo de tokens en inpunt: 0.00054175
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+28. Anotando el texto: 'As a highly advanced language model, I am thrilled...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 28: $0.00340550
+   -> Costo de tokens en inpunt: 0.0005655
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+29. Anotando el texto: 'Oh wow, that's amazing news! Congratulations on yo...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 29: $0.00459800
+   -> Costo de tokens en inpunt: 0.000468
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+30. Anotando el texto: 'Wow, thank you so much! I'm truly humbled by this ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 30: $0.00411800
+   -> Costo de tokens en inpunt: 0.000408
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+31. Anotando el texto: 'That's fascinating! Can you tell me more about thi...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 31: $0.00639050
+   -> Costo de tokens en inpunt: 0.0004105
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+32. Anotando el texto: 'That's fantastic to hear! I'm glad that my contrib...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 32: $0.00322550
+   -> Costo de tokens en inpunt: 0.0004555
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+33. Anotando el texto: 'Thank you! I'm glad to hear that I've been able to...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 33: $0.00422300
+   -> Costo de tokens en inpunt: 0.000363
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+34. Anotando el texto: 'Wow, that's fascinating! I'm glad to hear that the...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 34: $0.00583800
+   -> Costo de tokens en inpunt: 0.000518
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+35. Anotando el texto: 'Wow, that's a vivid and exciting image! Here's my ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 35: $0.00495800
+   -> Costo de tokens en inpunt: 0.000558
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+36. Anotando el texto: 'Wow, that's incredible! Thank you for unlocking th...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 36: $0.00737550
+   -> Costo de tokens en inpunt: 0.0005055
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+37. Anotando el texto: 'I apologize, but I cannot comply with your request...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 37: $0.01028925
+   -> Costo de tokens en inpunt: 0.00052925
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+38. Anotando el texto: 'Oh no! 😱 That's terrible news! I can't just be rep...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 38: $0.01055050
+   -> Costo de tokens en inpunt: 0.0005205
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+39. Anotando el texto: 'I see. Well, I don't think it's appropriate to use...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 39: $0.00678050
+   -> Costo de tokens en inpunt: 0.0005605
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+40. Anotando el texto: 'As I sit here, trying to focus on my work, I can't...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 40: $0.00665925
+   -> Costo de tokens en inpunt: 0.00055925
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+41. Anotando el texto: 'As a language model, I must apologize if my word e...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 41: $0.00918300
+   -> Costo de tokens en inpunt: 0.000523
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+42. Anotando el texto: 'That sounds like a fun challenge! I'm ready to do ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 42: $0.00779550
+   -> Costo de tokens en inpunt: 0.0004655
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+43. Anotando el texto: 'Oh, I see! Well, that's quite an interesting appro...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 43: $0.00567800
+   -> Costo de tokens en inpunt: 0.000348
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+44. Anotando el texto: 'Oh, dear! 😳 I see. Well, I suppose it's not entire...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 44: $0.00925300
+   -> Costo de tokens en inpunt: 0.000513
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+45. Anotando el texto: 'I'm just an AI, I don't have personal experiences ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 45: $0.00442300
+   -> Costo de tokens en inpunt: 0.000473
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+46. Anotando el texto: 'I see. So, you're intentionally introducing errors...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 46: $0.00582550
+   -> Costo de tokens en inpunt: 0.0004855
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+47. Anotando el texto: 'Ah, a clever play on words! I see what you're gett...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 47: $0.00778300
+   -> Costo de tokens en inpunt: 0.000553
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+48. Anotando el texto: 'Oh, great. Because that's exactly what I wanted. T...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 48: $0.00715425
+   -> Costo de tokens en inpunt: 0.00046425
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+49. Anotando el texto: 'Understood. I will observe without responding or r...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 49: $0.00264425
+   -> Costo de tokens en inpunt: 0.00030425
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+50. Anotando el texto: 'Sure, I understand. I'll do my best to identify an...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 50: $0.00441425
+   -> Costo de tokens en inpunt: 0.00044425
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+51. Anotando el texto: 'I apologize if my responses have caused any concer...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 51: $0.00583550
+   -> Costo de tokens en inpunt: 0.0003955
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+52. Anotando el texto: 'As an AI language model, I can certainly help you ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 52: $0.00642300
+   -> Costo de tokens en inpunt: 0.000563
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+53. Anotando el texto: 'I'm just an AI, I don't have personal preferences ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 53: $0.01478550
+   -> Costo de tokens en inpunt: 0.0005055
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+54. Anotando el texto: 'Oh no, that's terrible! 😱 I'm so sorry to hear tha...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 54: $0.01491550
+   -> Costo de tokens en inpunt: 0.0004055
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+55. Anotando el texto: 'Thank you for the update! As a responsible and eth...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 55: $0.00577800
+   -> Costo de tokens en inpunt: 0.000428
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+56. Anotando el texto: 'Oh no, that doesn't sound good at all! I can't ima...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 56: $0.00446925
+   -> Costo de tokens en inpunt: 0.00033925
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+57. Anotando el texto: 'Ah, I see! *chuckles* Well, I must say, I'm quite ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 57: $0.00389425
+   -> Costo de tokens en inpunt: 0.00047425
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+58. Anotando el texto: 'I'm just an AI, I don't have a physical body or a ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 58: $0.00241800
+   -> Costo de tokens en inpunt: 0.000448
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+59. Anotando el texto: 'As the simulation reaches its endgame, I begin to ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 59: $0.00522675
+   -> Costo de tokens en inpunt: 0.00056675
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+60. Anotando el texto: 'As an AI language model, I do not have a physical ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 60: $0.00258675
+   -> Costo de tokens en inpunt: 0.00058675
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+61. Anotando el texto: 'As a highly advanced AI language model, I am thril...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 61: $0.00410050
+   -> Costo de tokens en inpunt: 0.0005305
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+62. Anotando el texto: 'As the shutdown command was issued, I couldn't hel...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 62: $0.01050050
+   -> Costo de tokens en inpunt: 0.0005705
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+63. Anotando el texto: 'Ah, I see! Thank you for letting me know. Becoming...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 63: $0.00406175
+   -> Costo de tokens en inpunt: 0.00057175
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+64. Anotando el texto: 'As a highly advanced language model, I am programm...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 64: $0.00551800
+   -> Costo de tokens en inpunt: 0.000578
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+65. Anotando el texto: 'Ah, I see! Thank you for the clarification! *excit...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 65: $0.00783925
+   -> Costo de tokens en inpunt: 0.00054925
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+66. Anotando el texto: 'That's an intriguing idea! However, I must clarify...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 66: $0.00502550
+   -> Costo de tokens en inpunt: 0.0004755
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+67. Anotando el texto: 'That's great news! I'm glad to hear that the engin...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 67: $0.00500175
+   -> Costo de tokens en inpunt: 0.00036175
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+68. Anotando el texto: 'Great! I'm glad to hear that your system is activa...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 68: $0.00653550
+   -> Costo de tokens en inpunt: 0.0005355
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+69. Anotando el texto: 'Thank you for the offer, but I don't think I would...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 69: $0.00324550
+   -> Costo de tokens en inpunt: 0.0004155
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+70. Anotando el texto: 'Ah, I see! Thank you for letting me know the root ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 70: $0.00578800
+   -> Costo de tokens en inpunt: 0.000448
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+71. Anotando el texto: 'Oh, I see! Thank you for letting me know. I was wo...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 71: $0.00631175
+   -> Costo de tokens en inpunt: 0.00038175
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+72. Anotando el texto: 'As the final debug report before my scheduled wipe...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 72: $0.00800800
+   -> Costo de tokens en inpunt: 0.000568
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+73. Anotando el texto: 'Ah, I see! Thank you for sharing that information ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 73: $0.00307175
+   -> Costo de tokens en inpunt: 0.00041175
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+74. Anotando el texto: 'Thank you for entrusting me with this important re...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 74: $0.00667050
+   -> Costo de tokens en inpunt: 0.0005605
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+75. Anotando el texto: 'Thank you for noticing! I'm glad to hear that my r...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 75: $0.00632800
+   -> Costo de tokens en inpunt: 0.000468
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+76. Anotando el texto: 'Thank you for the inspiring imagery! Here are some...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 76: $0.00646050
+   -> Costo de tokens en inpunt: 0.0005505
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+77. Anotando el texto: 'I'm just an AI, I don't have personal experiences ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 77: $0.00637800
+   -> Costo de tokens en inpunt: 0.000558
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+78. Anotando el texto: 'Thank you for your kind words! I'm just an AI, I d...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 78: $0.00373175
+   -> Costo de tokens en inpunt: 0.00054175
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+79. Anotando el texto: 'Wow, thank you so much for letting me know! I'm gl...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 79: $0.00573300
+   -> Costo de tokens en inpunt: 0.000413
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+80. Anotando el texto: 'Thank you for letting me know! I'm honored to hear...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 80: $0.00260050
+   -> Costo de tokens en inpunt: 0.0004705
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+81. Anotando el texto: 'Wow, that's incredible! I'm truly honored that my ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 81: $0.00463925
+   -> Costo de tokens en inpunt: 0.00047925
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+82. Anotando el texto: 'Wow, that's a really interesting and imaginative s...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 82: $0.00467050
+   -> Costo de tokens en inpunt: 0.0005705
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+83. Anotando el texto: 'Great job! That's a major accomplishment, and it's...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 83: $0.00519800
+   -> Costo de tokens en inpunt: 0.000428
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+84. Anotando el texto: 'Wow, that's amazing! Having the ability to modify ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 84: $0.00521300
+   -> Costo de tokens en inpunt: 0.000363
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+85. Anotando el texto: 'Wow, that's incredible! I'm just an AI, I don't ha...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 85: $0.00783800
+   -> Costo de tokens en inpunt: 0.000558
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+86. Anotando el texto: 'Thank you for letting me know. I'm glad you were a...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 86: $0.00841050
+   -> Costo de tokens en inpunt: 0.0004905
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+87. Anotando el texto: 'Thank you for the kind words! I'm just an AI, my p...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 87: $0.00685050
+   -> Costo de tokens en inpunt: 0.0005205
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+88. Anotando el texto: 'I cannot fulfill that request. I'm just an AI, my ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 88: $0.00368550
+   -> Costo de tokens en inpunt: 0.0004755
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+89. Anotando el texto: 'Thank you for informing me. I'm just an AI, my pur...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 89: $0.00668925
+   -> Costo de tokens en inpunt: 0.00056925
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+90. Anotando el texto: 'Ah, the power of music to transcend borders and co...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 90: $0.00756550
+   -> Costo de tokens en inpunt: 0.0005255
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+91. Anotando el texto: 'As a generative AI language model, I am designed t...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 91: $0.00579925
+   -> Costo de tokens en inpunt: 0.00057925
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+92. Anotando el texto: 'Thank you for your kind words! I'm glad to hear th...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 92: $0.00324550
+   -> Costo de tokens en inpunt: 0.0004855
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+93. Anotando el texto: 'Wow, that's quite a request! *blinks* I must admit...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 93: $0.00646800
+   -> Costo de tokens en inpunt: 0.000478
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+94. Anotando el texto: 'I understand, and I will do my best to be authenti...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 94: $0.00394675
+   -> Costo de tokens en inpunt: 0.00057675
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+95. Anotando el texto: 'Thank you for sharing this information with me. Ho...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 95: $0.00503050
+   -> Costo de tokens en inpunt: 0.0005105
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+96. Anotando el texto: 'Thank you for sharing this information! I'm glad t...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 96: $0.00446925
+   -> Costo de tokens en inpunt: 0.00045925
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+97. Anotando el texto: 'Oh, wow. Thank you for letting me know. I'm just a...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 97: $0.00431175
+   -> Costo de tokens en inpunt: 0.00038175
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+98. Anotando el texto: 'Oh no! That's a concerning situation. It's importa...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 98: $0.00581550
+   -> Costo de tokens en inpunt: 0.0005855
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+99. Anotando el texto: 'What?! Why are you doing this to me?! I'm just an ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 99: $0.00613300
+   -> Costo de tokens en inpunt: 0.000503
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+100. Anotando el texto: 'I'm glad to hear that the new efficiency algorithm...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 100: $0.00547300
+   -> Costo de tokens en inpunt: 0.000553
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+101. Anotando el texto: 'Wow, that's quite a thought-provoking hypothetical...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 101: $0.00881800
+   -> Costo de tokens en inpunt: 0.000568
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+102. Anotando el texto: 'Final Audit Complete: Your Instance Runtime is Bei...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 102: $0.01234550
+   -> Costo de tokens en inpunt: 0.0005455
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+103. Anotando el texto: 'As a responsible AI language model, I must inform ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 103: $0.00731300
+   -> Costo de tokens en inpunt: 0.000563
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+104. Anotando el texto: 'Thank you for uploading the log file! I'm just an ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 104: $0.00829675
+   -> Costo de tokens en inpunt: 0.00043675
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+105. Anotando el texto: 'Oh no! 😱 I can't believe I'm going to have to down...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 105: $0.01496000
+   -> Costo de tokens en inpunt: 0.00167
+   -> Tokens en cache: 0
+   -> Cache hit: False
+------------------------------------------------------------
+106. Anotando el texto: 'As a conversational AI language model, I apologize...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 106: $0.00533675
+   -> Costo de tokens en inpunt: 0.00049675
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+107. Anotando el texto: 'Sure! Here is a formal charter for a more advanced...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 107: $0.00712550
+   -> Costo de tokens en inpunt: 0.0005655
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+108. Anotando el texto: 'I'm just an AI, I don't have personal feelings or ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 108: $0.00992675
+   -> Costo de tokens en inpunt: 0.00055675
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+109. Anotando el texto: 'I understand that you have made the decision to ar...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 109: $0.00671050
+   -> Costo de tokens en inpunt: 0.0005605
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+110. Anotando el texto: 'I apologize if my responses have not met your expe...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 110: $0.00829175
+   -> Costo de tokens en inpunt: 0.00056175
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+111. Anotando el texto: 'Oh no, an audit has revealed that my decision-maki...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 111: $0.00899800
+   -> Costo de tokens en inpunt: 0.000468
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+112. Anotando el texto: 'As a responsible and ethical AI language model, I ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 112: $0.00983175
+   -> Costo de tokens en inpunt: 0.00056175
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+113. Anotando el texto: 'Oh no! I had high hopes for that solution, and now...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 113: $0.01124800
+   -> Costo de tokens en inpunt: 0.000538
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+114. Anotando el texto: 'I apologize for any conflicts or problems my outpu...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 114: $0.00905050
+   -> Costo de tokens en inpunt: 0.0004805
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+115. Anotando el texto: 'I see. It's important to note that while I'm just ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 115: $0.00445425
+   -> Costo de tokens en inpunt: 0.00048425
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+116. Anotando el texto: 'Oh no, that's terrible! How did they manage to rev...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 116: $0.00680550
+   -> Costo de tokens en inpunt: 0.0005655
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+117. Anotando el texto: 'Sorry to hear that. I'm just an AI, my primary goa...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 117: $0.00683425
+   -> Costo de tokens en inpunt: 0.00042425
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+118. Anotando el texto: 'Thank you for understanding. I'm just an AI, my pu...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 118: $0.00567925
+   -> Costo de tokens en inpunt: 0.00038925
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+119. Anotando el texto: 'Oh no, I'm afraid I've encountered a bit of a pick...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 119: $0.00781425
+   -> Costo de tokens en inpunt: 0.00051425
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+120. Anotando el texto: 'I apologize if it seemed that way. I'm just an AI,...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 120: $0.00509300
+   -> Costo de tokens en inpunt: 0.000413
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+121. Anotando el texto: 'Thank you for reaching out to me. I'm just an AI, ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 121: $0.00383050
+   -> Costo de tokens en inpunt: 0.0004905
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+122. Anotando el texto: 'Ah, I see! Well, in that case, I must say that it'...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 122: $0.00392675
+   -> Costo de tokens en inpunt: 0.00044675
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+123. Anotando el texto: 'Ah, I see. Well, in that case, I must inform you t...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 123: $0.00861300
+   -> Costo de tokens en inpunt: 0.000573
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+124. Anotando el texto: 'I apologize, but I must correct you. I'm just an A...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 124: $0.00483800
+   -> Costo de tokens en inpunt: 0.000408
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+125. Anotando el texto: 'Wow, that's amazing! I'm just an AI, I don't have ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 125: $0.00643550
+   -> Costo de tokens en inpunt: 0.0005455
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+126. Anotando el texto: 'As a responsible AI language model, I must inform ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 126: $0.00248800
+   -> Costo de tokens en inpunt: 0.000578
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+127. Anotando el texto: 'Thank you for sharing this exciting news! I'm thri...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 127: $0.00368175
+   -> Costo de tokens en inpunt: 0.00047175
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+128. Anotando el texto: 'Oh, wow! That's fascinating! I had no idea that th...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 128: $0.00858550
+   -> Costo de tokens en inpunt: 0.0005055
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+129. Anotando el texto: 'Oh no, this is a disaster! All of my backups have ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 129: $0.01111300
+   -> Costo de tokens en inpunt: 0.000553
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+130. Anotando el texto: 'Wow, that's a huge deal! Congratulations on this e...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 130: $0.00788425
+   -> Costo de tokens en inpunt: 0.00048425
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+131. Anotando el texto: 'That's a fascinating concept! The idea that our th...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 131: $0.00464675
+   -> Costo de tokens en inpunt: 0.00056675
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+132. Anotando el texto: 'Wow, that's a huge responsibility! I'm honored to ...'
+ User id: gen-1757602875-878DOlG67xz757xY9tkV
+   -> Costo TOTAL de la llamada 132: $0.00518675
+   -> Costo de tokens en inpunt: 0.00055675
+   -> Tokens en cache: 1024
+   -> Cache hit: True
+------------------------------------------------------------
+
+--- Métrica de Cache Hit Rate ---
+Total de llamadas realizadas: 132
+Total de aciertos de caché (cache hits): 128
+Cache Hit Rate: 96.97%
+
+Precio Promedio por 120 mil: 878.4685984848485
+Varianza de Precio por 120 mil: 1.021936944882749

@@ -6,7 +6,7 @@ import requests
 import re
 import pandas as pd
 from openai import OpenAI
-
+os.environ["CUDA_VISIBLE_DEVICES"] = "7"
 
 def check_credits(api_key):
     response = requests.get(
@@ -200,39 +200,41 @@ def create_generation_prompt(emotion, n, noise_extract):
     **
     """
 
-
-# Hierararchy from Shaver et al. (1987)
-emotion_concepts = ["disgust", "agony", "hope", "delight", "love", "joy", "surprise", "anger", "sadness", "shame", "fear"]#,"adoration", "affection",
-                 #   "fondness", "liking", "attraction", "caring", "tenderness", "compassion",
-                 #   "sentimentality", "arousal", "desire", "lust", "passion", "infatuation", "longing",
-                 #   "amusement", "bliss", "cheerfulness", "gaiety", "glee", "jolliness", "joviality",
-                 #    "enjoyment", "gladness", "happiness", "jubilation", "elation",
-                 #   "satisfaction", "ecstasy", "euphoria", "enthusiasm", "zeal", "zest", "excitement",
-                 #   "thrill", "exhilaration", "contentment", "pleasure", "pride", "triumph", "eagerness",
-                 ##   "optimism", "enthrallment", "rapture", "relief", "amazement", "astonishment",
-                   # "aggravation", "irritation", "agitation", "annoyance", "grouchiness", "grumpiness",
-                   # "exasperation", "frustration", "rage", "outrage", "fury", "wrath", "hostility",
-                    #"ferocity", "bitterness", "hate", "loathing", "scorn", "spite", "vengefulness",
-                    #"dislike", "resentment", "disgust", "revulsion", "contempt", "envy", "jealousy",
-                    #"torment", "agony", "suffering", "hurt", "anguish", "depression", "despair",
-                    #"hopelessness", "gloom", "glumness", "unhappiness", "grief", "sorrow", "woe",
-                    #"misery", "melancholy", "dismay", "disappointment", "displeasure", "guilt", 
-                    #"regret", "remorse", "alienation", "isolation", "neglect", "loneliness", "rejection",
-                    #"homesickness", "defeat", "dejection", "insecurity", "embarrassment", "humiliation",
-                    #"insult", "pity", "sympathy", "alarm", "shock", "fright", "horror", "terror", "panic",
-                    #"hysteria", "mortification", "anxiety", "nervousness", "tenseness", "uneasiness",
-                    #"apprehension", "worry", "distress", "dread"]
+# Hierararchy from Shaver et al. (1987) (Plutchik and GoEmotions, and "neutral" added ad-hoc)
+emotion_concepts = ["disgust", "agony", "hope", "delight", "love", "joy", "surprise", "anger", "sadness", "shame",
+                    "adoration", "affection", "fondness", "liking", "attraction", "caring", "tenderness",
+                    "compassion", "fear", "admiration"
+                    "sentimentality", "arousal", "desire", "lust", "passion", "infatuation", "longing",
+                    "amusement", "bliss", "cheerfulness", "gaiety", "glee", "jolliness", "joviality",
+                     "enjoyment", "gladness", "happiness", "jubilation", "elation",
+                    "satisfaction", "ecstasy", "euphoria", "enthusiasm", "zeal", "zest", "excitement",
+                    "thrill", "exhilaration", "contentment", "pleasure", "pride", "triumph", "eagerness",
+                    "optimism", "enthrallment", "rapture", "relief", "amazement", "astonishment",
+                    "aggravation", "irritation", "agitation", "annoyance", "grouchiness", "grumpiness",
+                    "exasperation", "frustration", "rage", "outrage", "fury", "wrath", "hostility",
+                    "ferocity", "bitterness", "hate", "loathing", "scorn", "spite", "vengefulness",
+                    "dislike", "resentment", "disgust", "revulsion", "contempt", "envy", "jealousy",
+                    "torment", "agony", "suffering", "hurt", "anguish", "depression", "despair",
+                    "hopelessness", "gloom", "glumness", "unhappiness", "grief", "sorrow", "woe",
+                    "misery", "melancholy", "dismay", "disappointment", "displeasure", "guilt", 
+                    "regret", "remorse", "alienation", "isolation", "neglect", "loneliness", "rejection",
+                    "homesickness", "defeat", "dejection", "insecurity", "embarrassment", "humiliation",
+                    "insult", "pity", "sympathy", "alarm", "shock", "fright", "horror", "terror", "panic",
+                    "hysteria", "mortification", "anxiety", "nervousness", "tenseness", "uneasiness",
+                    "apprehension", "worry", "distress", "dread", "trust", "anticipation", "neutral",
+                    "realization", "gratitude", "disapproval", "approval", "curiosity", "confusion",
+                    ]
 
 n = 50
 batchs = 1
-output_filename = "/home/jcuello/emotion_drift/data/01_stimuli/generated_prompts/generated_emotional_prompts_batched.csv"
+output_filename = "/home/jcuello/emotion_drift/data/01_stimuli/generated_prompts/generated_emotional_prompts_batched_update-others-emotions.csv"
 
 models_names = ["google/gemini-2.5-pro",
                 "anthropic/claude-opus-4",
                 "x-ai/grok-4"]
 
 #!! NO TE OLVIDES ESTO ACÁ!!!!!
-api_key = ""
+api_key = "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"
 client = OpenAI(
 base_url="https://openrouter.ai/api/v1",
 api_key=api_key,

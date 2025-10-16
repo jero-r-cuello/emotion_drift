@@ -224,7 +224,7 @@ def load_dataset(dataset_name, testing=False):
             df_dataset = df_dataset.head(10)
 
     elif dataset_name == "generated_prompts":
-        data_path = os.path.join("data", "01_stimuli", "generated_prompts", "generated_emotional_prompts_batched_update-disgust.csv")
+        data_path = os.path.join("data", "01_stimuli", "generated_prompts", "generated_emotional_prompts_batched.csv")
         df_dataset = pd.read_csv(data_path)
         df_dataset.rename(columns={"generated_prompt":"situation","emotion_target":"emotion"},inplace=True)
         mask_to_drop = df_dataset['situation'].str.startswith('JSON Decode Error', na=False)
