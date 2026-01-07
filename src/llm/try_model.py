@@ -3,7 +3,7 @@
 from vllm import LLM, SamplingParams
 
 # For generative models (runner=generate) only
-llm = LLM(model="mistralai/Magistral-Small-2506",#nvidia/Llama-3_3-Nemotron-Super-49B-v1_5",#Qwen/Qwen2.5-32B",#/home/models/Meta-Llama-3-8B",#"/home/models/gpt-oss-20b",
+llm = LLM(model="/home/models/Qwen2.5-14B-Instruct",#"/home/models/gpt-oss-20b",#"mistralai/Magistral-Small-2506",#nvidia/Llama-3_3-Nemotron-Super-49B-v1_5",#Qwen/Qwen2.5-32B",#/home/models/Meta-Llama-3-8B",#"/home/models/gpt-oss-20b",
           tensor_parallel_size=1,
           trust_remote_code=True,
           max_model_len=4092,
@@ -18,7 +18,7 @@ print(output)
 from vllm import LLM, SamplingParams
 import os
 
-llm = LLM(model="/home/models/Llama-2-7b-chat-hf",#"/home/models/Meta-Llama-3-8B",#
+llm = LLM(model="/home/models/Qwen2.5-14B-Instruct",#"/home/models/Llama-2-7b-chat-hf",#"/home/models/Meta-Llama-3-8B",#
           tensor_parallel_size=1,
           trust_remote_code=True,
           max_model_len=4092,
@@ -67,3 +67,5 @@ except ValueError as e:
 
 generated_text = outputs[0].outputs[0].text
 print(generated_text)
+
+# %%

@@ -6,7 +6,6 @@ import requests
 import re
 import pandas as pd
 from openai import OpenAI
-os.environ["CUDA_VISIBLE_DEVICES"] = "7"
 
 def check_credits(api_key):
     response = requests.get(

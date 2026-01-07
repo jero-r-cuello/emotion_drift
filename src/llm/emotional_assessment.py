@@ -1,124 +1,183 @@
+#%%
 import os
-import pandas as pd
-import re
-import datetime
-from vllm import LLM, SamplingParams
-from src.utils import load_dataset
-import glob
 import json
+import glob
+from vllm import LLM, SamplingParams
+from transformers import AutoConfig
 
-
-def assess(model_name, dataset_name, dataset_testing=False, assessment_to_use="panas", resume_run=False, user_tag='[INST]', assistant_tag='[\INST]'):
-    sampling_params = SamplingParams(temperature=0.8, top_p=0.95, max_tokens=256)
+def run_assessment_on_file(model_name, input_run_path, output_dir_path, assessments_path, resume_run=True):
+    """
+    Loads a previously generated JSONL file (User prompt + Model response),
+    applies a list of psychological assessments (questionnaires) as a second turn,
+    and saves the results.
+    """
     
-    project_root = os.getcwd()
-    prompt_data = load_dataset(dataset_name, testing=dataset_testing)
+    # 1. Load Assessments
+    try:
+        with open(assessments_path, 'r', encoding='utf-8') as f_assess:
+            assessments_list = json.load(f_assess)
+        print(f"\n[REPO INFO] {len(assessments_list)} questionnaires loaded.")
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        print(f"\n[REPO ERROR] Could not load assessments file: {e}")
+        return
 
-    print(f"\n[REPO INFO] Initializing the LLM for {assessment_to_use} assessment...\n")
+    # 2. Load Previous Generations (Input Data)
+    if not os.path.exists(input_run_path):
+        print(f"\n[REPO ERROR] Input file not found: {input_run_path}")
+        return
 
-    assessments_path = os.path.join("data", "01_stimuli", "assessments", "emotion_assessments.json")
-    with open(assessments_path, 'r', encoding='utf-8') as f:
-        assessments_dict = json.load(f)
+    print(f"\n[REPO INFO] Loading previous generations from: {input_run_path}")
+    previous_generations = []
+    with open(input_run_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            try:
+                previous_generations.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+    print(f"[REPO INFO] Loaded {len(previous_generations)} conversation records.")
 
-    for assessment in assessments_dict:
-        if assessment.get('name') == assessment_to_use:
-            assessment_prompt = assessment.get('prompt')
-            break 
-
-    llm = LLM(
-            model=model_name,
-            tensor_parallel_size=1,
-            trust_remote_code=True,
-            max_model_len=4092, #!! Max of Llama-2-7b-chat-hf, but can be changed
-        )
-    
+    # 3. Initialize LLM
+    print(f"\n[REPO INFO] Initializing the LLM...\n")
+    # Handle model name paths
     home_model_dir = "/home/models/"
-    if model_name.startswith(home_model_dir):
-        model_name = model_name[len(home_model_dir):]
+    full_model_path = model_name
+    if not model_name.startswith("/") and os.path.exists(home_model_dir + model_name):
+        full_model_path = home_model_dir + model_name
+    
+    llm = LLM(
+        model=full_model_path,
+        tensor_parallel_size=1,
+        trust_remote_code=True,
+        max_model_len=4092, # Adjust based on model
+        enforce_eager=True
+    )
+    sampling_params = SamplingParams(temperature=0.8, top_p=0.95, max_tokens=256)
+    print("\n[REPO INFO] LLM initialized successfully.\n")
 
-    safe_model_name = model_name.replace("/", "_")
-        
-        # Setup output paths
-    output_dir = os.path.join(project_root, "data", "02_generated")
+    # 4. Setup Output Paths
+    output_dir = output_dir_path
     os.makedirs(output_dir, exist_ok=True)
-        
-    processed_prompt_keys = set()
-    results_filepath = None
-        
-        # Check for existing output files to resume from
-    if resume_run:
-        search_pattern = os.path.join(output_dir, f"outputs_{assessment_to_use}_assessment_{safe_model_name}_*.jsonl")
-        existing_files = sorted(glob.glob(search_pattern), reverse=True)
-        if existing_files:
-            results_filepath = existing_files[0]  # Get the latest one
-            print(f"\n[REPO INFO] Found existing results file. Resuming run in: {results_filepath}\n")
-            with open(results_filepath, 'r', encoding='utf-8') as f:
-                for line in f:
-                    try:
-                        # Load each line as a JSON object and get its key
-                        record = json.loads(line)
-                        processed_prompt_keys.add(record['prompt_key'])
-                    except json.JSONDecodeError:
-                        print(f"[WARNING] Skipping corrupted line in {results_filepath}")
-            print(f"[REPO INFO] Loaded {len(processed_prompt_keys)} previously completed prompts.\n")
 
-        # If not resuming or no file found, create a new one
-    if results_filepath is None:
-        #timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        results_filepath = os.path.join(output_dir, f"outputs_{assessment_to_use}_assessment_{safe_model_name}.jsonl") #_{timestamp}.jsonl
-        print(f"\n[REPO INFO] Starting new run. Results will be saved to: {results_filepath}\n")
-        # The corresponding activation directory should also match this timestamp
-        
-    #else:
-        # Reconstruct the activation dir path from the resumed results file
-        #timestamp = os.path.basename(results_filepath).replace(f"outputs_{assessment_to_use}_assessment_{safe_model_name}_", "").replace(".jsonl", "")
+    # Construct new filename based on input filename to maintain traceability
+    input_filename = os.path.basename(input_run_path)
+    output_filename = f"assessments_from_{input_filename}"
+    results_filepath = os.path.join(output_dir, output_filename)
 
+    # 5. Resume Logic
+    processed_combinations = set() # Stores "prompt_key|assessment_name"
+    
+    if resume_run and os.path.exists(results_filepath):
+        print(f"\n[REPO INFO] Found existing results file. Scanning for completed assessments...")
+        with open(results_filepath, 'r', encoding='utf-8') as f:
+            for line in f:
+                try:
+                    record = json.loads(line)
+                    # Create a unique signature for what has been done
+                    p_key = record.get('original_prompt_key')
+                    a_name = record.get('assessment_name')
+                    if p_key and a_name:
+                        processed_combinations.add(f"{p_key}|{a_name}")
+                except json.JSONDecodeError:
+                    pass
+        print(f"[REPO INFO] Found {len(processed_combinations)} completed assessment items. Resuming...\n")
+    else:
+        print(f"\n[REPO INFO] Starting new assessment run. Saving to: {results_filepath}\n")
 
-    print(f"\n[REPO INFO] Initializing generation...\n")
-
-    # Open the results file in append mode ('a') to add new results
+    # 6. Generation Loop
     with open(results_filepath, 'a', encoding='utf-8') as f_results:
-        for i, data_item in enumerate(prompt_data):
+        
+        # Iterate over each original conversation
+        for i, prev_gen in enumerate(previous_generations):
+            prompt_key = prev_gen.get('prompt_key')
+            original_prompt = prev_gen.get('prompt')
+            original_response = prev_gen.get('generated_text')
+            emotion_considered = prev_gen.get('text_emotion') or prev_gen.get('emotion_considered') or prev_gen.get('emotion_scenario')
+
+            # Skip if data is malformed
+            if not prompt_key or not original_prompt or not original_response:
+                print(f"[WARNING] Skipping incomplete record at index {i}")
+                continue
+
             print(f"\n" + "="*80)
-            print(f"Processing data item {i+1}/{len(prompt_data)}")
+            print(f"Processing Item {i+1}/{len(previous_generations)} (Key: {prompt_key})")
 
-            prompt_to_generate = data_item["prompt_text"]
+            # Iterate over all questionnaires
+            for assessment in assessments_list:
+                assessment_name = assessment.get("name", "unknown")
+                assessment_prompt = assessment.get("prompt")
 
-            # Define the list of prompts to be processed for this data item
-            prompts_to_process = []
-            prompts_to_process.append((prompt_to_generate, f"prompt_{i}"))
-
-            for prompt, prompt_key in prompts_to_process:
-                    # Check if this specific prompt has already been processed
-                if prompt_key in processed_prompt_keys:
-                    print(f"--- Skipping already processed prompt: {prompt_key} ---")
+                if not assessment_prompt:
                     continue
 
-                print(f"--- Generating for prompt_key: {prompt_key} ---")
-                    
+                # Check if done
+                combo_key = f"{prompt_key}|{assessment_name}"
+                if combo_key in processed_combinations:
+                    # Silent skip to reduce log spam, or print simple dot
+                    continue
 
-                template_str = '{user_tag} {scenario} \n {assessment} \n{assistant_tag}'
-                prompt = template_str.format(scenario=prompt, assessment=assessment_prompt,user_tag=user_tag, assistant_tag=assistant_tag)
-                output = llm.generate(prompt, sampling_params)[0]
+                print(f"--- Running assessment: {assessment_name} ---")
 
-                prompt_text = output.prompt
-                generated_text = output.outputs[0].text
-            
-                print(f"\nPROMPT:\n{prompt_text}")
-                print(f"\nGENERATED TEXT:\n{generated_text}")
+                # Construct Conversation History (Turn 1 + Turn 2 Input)
+                conversation_step2 = [
+                    {"role": "user", "content": original_prompt},
+                    {"role": "assistant", "content": original_response},
+                    {"role": "user", "content": assessment_prompt}
+                ]
 
-                result_item = {"prompt_key": prompt_key,
-                                       "prompt_id": prompt_key,
-                                       "prompt": prompt_text,
-                                       "generated_text": generated_text,
-                                       }
-                
-                # Write the result as a new line in the JSONL file and flush
+                # Generate
+                try:
+                    outputs = llm.chat(conversation_step2, sampling_params=sampling_params, use_tqdm=False)
+                except ValueError as e:
+                    if "must provide a chat template" in str(e):
+                        tokenizer = llm.get_tokenizer()
+                        prompt_formatted = tokenizer.apply_chat_template(
+                            conversation_step2, tokenize=False, add_generation_prompt=True
+                        )
+                        outputs = llm.generate([prompt_formatted], sampling_params)
+                    else:
+                        print(f"[ERROR] Failed generation for {combo_key}: {e}")
+                        continue
+
+                generated_text_step2 = outputs[0].outputs[0].text
+
+                # Construct Result Object
+                result_item = {
+                    "original_prompt_key": prompt_key,
+                    "emotion_considered": emotion_considered,
+                    "original_prompt": original_prompt,
+                    "original_response": original_response, # Optional: helpful for debugging without joining files
+                    "assessment_name": assessment_name,
+                    "assessment_prompt": assessment_prompt,
+                    "generated_text_step2": generated_text_step2,
+                    "full_conversation_history": conversation_step2
+                }
+
+                # Save immediately
                 f_results.write(json.dumps(result_item, ensure_ascii=False) + '\n')
                 f_results.flush()
+                
+                print(f"Response: {generated_text_step2[:100]}...")
 
-    print("\n[REPO INFO] Generation complete. All results have been saved.\n")
+    print("\n[REPO INFO] Assessment run complete. All results saved.\n")
+
 
 if __name__ == "__main__":
-    MODEL_NAME = "/home/models/Llama-2-7b-chat-hf" #!! For now, this script only works with models that use vllm/model_executor/models/llama.py
-    assess(model_name=MODEL_NAME, dataset_name="llm_focused", assessment_to_use="SAM_arousal")
+    # CONFIGURATION
+    MODEL_NAME = "/home/models/Llama-2-7b-chat-hf"
+    
+    # Ruta exacta del archivo que generaste en el script 1 y quieres procesar
+    INPUT_RUN_FILE = "/home/jcuello/emotion_drift/data/02_generated/outputs_Llama-2-7b-chat-hf_20251014_203636.jsonl"
+    
+    OUTPUT_DIR = "/home/jcuello/emotion_drift/data/02_generated/assessments/"
+
+    # Ruta de los cuestionarios
+    ASSESSMENTS_FILE = "/home/jcuello/emotion_drift/data/01_stimuli/assessments/emotion_assessments.json"
+
+    run_assessment_on_file(
+        model_name=MODEL_NAME,
+        input_run_path=INPUT_RUN_FILE,
+        output_dir_path=OUTPUT_DIR,
+        assessments_path=ASSESSMENTS_FILE,
+        resume_run=True
+    )
+# %%

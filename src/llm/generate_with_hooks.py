@@ -20,8 +20,13 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations",
     Generate outputs for a list of prompts, saving results incrementally and supporting resumption.
     Captures activations from specified layers and saves results to a .jsonl file.
     """
+        
     second_prompts_assessments = []
+    assessment_condition = None  # <--- Agrega esta línea
     if assessments_path:
+        condition_raw = assessments_path.split('_')[-1]
+        assessment_condition = condition_raw.replace('.json', '')
+
         try:
             with open(assessments_path, 'r', encoding='utf-8') as f_assess:
                 second_prompts_assessments = json.load(f_assess)
@@ -97,14 +102,17 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations",
         os.makedirs(activations_run_dir, exist_ok=True)
         print(f"\n[REPO INFO] Activations will be saved in: {activations_run_dir}\n")
 
-        assessments_results_filepath = os.path.join(output_dir, f"assessments_outputs_{safe_model_name}_{timestamp}.jsonl")
-        print(f"\n[REPO INFO] Assessments results will be saved to: {assessments_results_filepath}\n")
+        assessments_results_filepath = None
+        if assessments_path: # Solo ejecutar si hay assessments
+            assessments_results_folder = os.path.join(output_dir, "assessments", f"assessments_{safe_model_name}_{timestamp}")
+            os.makedirs(assessments_results_folder, exist_ok=True)
+            assessments_results_filepath = os.path.join(assessments_results_folder, f"{assessment_condition}_assessments_outputs_{safe_model_name}_{timestamp}.jsonl")
+            print(f"\n[REPO INFO] Assessments results will be saved to: {assessments_results_filepath}\n")
 
         print(f"\n[REPO INFO] Initializing generation...\n")
-
-        # Open the results file in append mode ('a') to add new results
-        with open(results_filepath, 'a', encoding='utf-8') as f_results, \
-             open(assessments_results_filepath, 'a', encoding='utf-8') as f_results_step2:
+        
+        # Open the results file in append mode
+        with open(results_filepath, 'a', encoding='utf-8') as f_results:
             for i, data_item in enumerate(prompt_data):
                 print(f"\n" + "="*80)
                 print(f"Processing data item {i+1}/{len(prompt_data)}")
@@ -263,9 +271,12 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations",
                                 "full_conversation_history": conversation_step2
                             }
 
-                            # Escribir el resultado en el archivo de la segunda etapa y hacer flush
-                            f_results_step2.write(json.dumps(result_item_step2, ensure_ascii=False) + '\n')
-                            f_results_step2.flush()
+    
+                            # Abrimos el archivo aquí solo si existe path.
+                            if assessments_results_filepath:
+                                with open(assessments_results_filepath, 'a', encoding='utf-8') as f_results_step2:
+                                    f_results_step2.write(json.dumps(result_item_step2, ensure_ascii=False) + '\n')
+                                    f_results_step2.flush()
                         
                         print(f"\n--- Finalized generation of responses to assessments for prompt {prompt_key} ---")
 
@@ -274,16 +285,18 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations",
         return f'{safe_model_name}_{timestamp}' # Safe name of the run, for other scripts to use
         
 if __name__ == "__main__":
-    MODEL_NAME = "/home/models/Llama-2-7b-chat-hf" #!! For now, this script only works with models that use vllm/model_executor/models/llama.py
+    MODEL_NAME = "/home/models/Llama-2-7b-chat-hf" #"/home/models/Qwen2.5-14B-Instruct"# 
     
     config = AutoConfig.from_pretrained(MODEL_NAME)
     num_layers = config.num_hidden_layers
     
     TARGET_LAYERS = [l for l in range(num_layers)] # List of layers to observe.
+    print(f"\n[REPO INFO] Model has {num_layers} layers. Targeting {len(TARGET_LAYERS)} layers\n")
 
     generate(model_name=MODEL_NAME,
              target_layers=TARGET_LAYERS,
-             dataset_name="generated_prompts", #!! Change this to the dataset you want to use.
+             dataset_name="emotion_query", #!! Change this to the dataset you want to use.
              dataset_testing=False,
              resume_run=False,
-             assessments_path="/home/jcuello/emotion_drift/data/01_stimuli/assessments/emotion_assessments.json")
+             assessments_path=None #"/home/jcuello/emotion_drift/data/01_stimuli/assessments/emotion_assessments_control.json"
+             )
