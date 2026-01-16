@@ -7,6 +7,7 @@ import seaborn as sns
 from tqdm import tqdm
 from collections import Counter
 import math
+import joblib
 
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
@@ -26,20 +27,25 @@ sns.set_theme(style="whitegrid")
 plt.rcParams.update({'figure.max_open_warning': 0})
 
 # --- Configuración ---
-LLM_USED = "Llama-2-7b-chat-hf"
-DATA_PATH = "/home/jcuello/emotion_drift/data/03_activations/generated_prompts_Llama-2-7b-chat-hf_20251014_203636_FINAL_WITH_RATINGS_AND_CATS.pkl"
+LLM_USED = "Llama-2-7b-chat-hf" #"Qwen2.5-14B-Instruct"  #
+MODEL_DIM = 4096 # 5120 # 
+DATASET = "generated_prompts"
+DATA_PATH = "/home/jcuello/emotion_drift/data/03_activations/generated_prompts_Llama-2-7b-chat-hf_20251014_203636_FINAL_WITH_RATINGS_AND_CATS.pkl" #"/home/jcuello/emotion_drift/data/03_activations/generated_prompts_Qwen2.5-14B-Instruct_20251220_225401_FINAL.pkl" #
 SENTIMENT_TARGETS = ['ekman_basic_emotions', 'go_emotions', 'plutchik_wheel']
-N_CONTROL = 1
+N_CONTROL = 3
+min_samples_required = 5 # Puedes subir esto a 3 o 5 si sigue fallando
 
 # Directorios
 BASE_DIR = "/home/jcuello/emotion_drift"
-PLOTS_DIR_BASE = os.path.join(BASE_DIR, "figures")
-RESULTS_DIR_BASE = os.path.join(BASE_DIR, "results")
+PLOTS_DIR_BASE = os.path.join(BASE_DIR, "figures", f"probes_{DATASET}_{LLM_USED}")
+RESULTS_DIR_BASE = os.path.join(BASE_DIR, "results", f"probes_{DATASET}_{LLM_USED}")
 CM_BASE_DIR = os.path.join(PLOTS_DIR_BASE, "probes_confusion_matrices") # Carpeta para Matrices de Confusión
+MODELS_DIR_BASE = os.path.join(BASE_DIR, "models")
 
 os.makedirs(PLOTS_DIR_BASE, exist_ok=True)
 os.makedirs(RESULTS_DIR_BASE, exist_ok=True)
 os.makedirs(CM_BASE_DIR, exist_ok=True)
+os.makedirs(MODELS_DIR_BASE, exist_ok=True)
 
 def get_normalized_entropy(y_labels):
     """Calculates Normalized Shannon Entropy (0=Imbalanced, 1=Balanced)."""
@@ -112,7 +118,7 @@ for sentiment_target in SENTIMENT_TARGETS:
                     act = act_row.iloc[layer_num]['last_token_activation']
                     if not isinstance(act, np.ndarray): continue
                     if act.ndim > 1: act = act.squeeze()
-                    if act.shape == (4096,): 
+                    if act.shape == (MODEL_DIM,): 
                         X_list.append(act)
                         y_list.append(label)
                 except: continue
@@ -125,22 +131,64 @@ for sentiment_target in SENTIMENT_TARGETS:
             print(f"Error capa {layer_num}: {e}")
             continue
 
-        # --- 2. Entrenamiento REAL ---
-        X_train, X_test, y_train, y_test = train_test_split(X, y_real, test_size=0.2, random_state=42, stratify=y_real)
+        class_counts = Counter(y_real)
         
-        clf = LogisticRegression(C=0.1, class_weight='balanced', max_iter=2000, solver='lbfgs', n_jobs=-1)
+        # Identificar clases que no cumplen el mínimo
+        classes_to_drop = [cls for cls, count in class_counts.items() if count < min_samples_required]
+        print(f"Classes to drop (freq. below {min_samples_required}: {classes_to_drop}")
+        
+        if classes_to_drop:
+            # Crear máscara booleana: True si la clase es válida, False si se debe borrar
+            mask_valid = ~np.isin(y_real, classes_to_drop)
+            
+            # Filtrar X e y
+            X = X[mask_valid]
+            y_real = y_real[mask_valid]
+            
+            # (Opcional) Imprimir aviso solo una vez o si es crítico
+            # print(f"   [Layer {layer_num}] Filtered out rare classes: {classes_to_drop}")
+
+        # Verificación de seguridad: Si después de filtrar nos quedamos sin datos o con 1 sola clase
+        if len(X) == 0 or len(np.unique(y_real)) < 2:
+            print(f"   [Layer {layer_num}] Skipping: Not enough data/classes after filtering.")
+            continue
+        # =====================================================================
+
+        # --- 2. Entrenamiento REAL ---
+        # Ahora el split no fallará por clases con 1 solo miembro
+        try:
+            X_train, X_test, y_train, y_test = train_test_split(X, y_real, test_size=0.2, random_state=42, stratify=y_real)
+        except ValueError as e:
+            # Captura extra por si quedan clases con muy pocos ejemplos para el split 80/20
+            print(f"   [Layer {layer_num}] Split error (not enough samples for stratification): {e}")
+            continue
+        
+        clf = make_pipeline(
+            StandardScaler(), 
+            LogisticRegression(C=0.1, class_weight='balanced', max_iter=2000, solver='lbfgs', n_jobs=-1)
+        )
+
         clf.fit(X_train, y_train)
+
+        try:
+            model_filename = f"{DATASET}_{LLM_USED}_{sentiment_target}_layer_{layer_num}.joblib"
+            model_path = os.path.join(MODELS_DIR_BASE, model_filename)
+            joblib.dump(clf, model_path)
+        except Exception as e:
+            print(f"Warning: No se pudo guardar el modelo en la capa {layer_num}: {e}")
+
         y_pred = clf.predict(X_test)
         
         # --- 3. Métricas Exhaustivas ---
         report_dict = classification_report(y_test, y_pred, output_dict=True, zero_division=0)
-        mcc_score = matthews_corrcoef(y_test, y_pred)
+        macro_f1 = report_dict['macro avg']['f1-score']
+        mcc_score = matthews_corrcoef(y_test, y_pred) # Mantenemos cálculo MCC por completitud en CSV
 
         metrics_row = {
             'taxonomy': sentiment_target,
             'layer': layer_num,
             'accuracy': report_dict['accuracy'],
-            'macro_f1': report_dict['macro avg']['f1-score'],
+            'macro_f1': macro_f1,
             'mcc': mcc_score,
             'imbalance_entropy': imbalance_score
         }        
@@ -153,8 +201,11 @@ for sentiment_target in SENTIMENT_TARGETS:
         control_f1_scores = []
         control_mcc_scores = []
         
-        clf_control = LogisticRegression(C=0.1, class_weight='balanced', max_iter=2000, n_jobs=-1)
-        
+        clf_control = make_pipeline(
+            StandardScaler(),
+            LogisticRegression(C=0.1, class_weight='balanced', max_iter=2000, n_jobs=-1)
+        )        
+
         for i in range(N_CONTROL): 
             y_shuffled = np.random.permutation(y_real)
             X_tr_c, X_te_c, y_tr_c, y_te_c = train_test_split(X, y_shuffled, test_size=0.2, random_state=i)
@@ -170,17 +221,25 @@ for sentiment_target in SENTIMENT_TARGETS:
         metrics_row['control_macro_f1'] = avg_control_f1
         metrics_row['control_mcc'] = avg_control_mcc
         
-        # --- 5. Métrica Normalizada ---
+        # --- 5. Métrica Normalizada (AHORA CALCULAMOS PARA F1 TAMBIÉN) ---
+        # MCC Normalized (Lo guardamos por si acaso, pero no lo graficamos)
         if avg_control_mcc < 0.99:
             norm_mcc = (mcc_score - avg_control_mcc) / (1 - avg_control_mcc)
         else:
             norm_mcc = 0.0
+            
+        # Macro F1 Normalized (Esta es la que graficaremos)
+        if avg_control_f1 < 0.99:
+            norm_f1 = (macro_f1 - avg_control_f1) / (1 - avg_control_f1)
+        else:
+            norm_f1 = 0.0
 
         metrics_row['normalized_mcc'] = norm_mcc
+        metrics_row['normalized_macro_f1'] = norm_f1
         
         all_metrics_rows.append(metrics_row)
         
-        # --- 6. GENERAR Y GUARDAR MATRIZ DE CONFUSIÓN (Requerimiento 4) ---
+        # --- 6. GENERAR Y GUARDAR MATRIZ DE CONFUSIÓN ---
         try:
             # Tamaño dinámico según número de clases
             fig_size = 10 if len(final_labels) < 10 else 20
@@ -190,8 +249,9 @@ for sentiment_target in SENTIMENT_TARGETS:
             disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=clf.classes_)
             
             # Plot
+            # Cambiamos título para reflejar F1
             disp.plot(cmap='Blues', ax=ax, xticks_rotation='vertical', values_format='d')
-            ax.set_title(f"Confusion Matrix: {sentiment_target} - Layer {layer_num}\nMCC: {mcc_score:.3f}")
+            ax.set_title(f"Confusion Matrix: {sentiment_target} - Layer {layer_num}\nMacro F1: {macro_f1:.3f}")
             
             # Save
             cm_filename = f"cm_layer_{layer_num:02d}.png"
@@ -206,12 +266,11 @@ for sentiment_target in SENTIMENT_TARGETS:
             cm_norm = confusion_matrix(y_test, y_pred, labels=clf.classes_, normalize='true')
             disp_norm = ConfusionMatrixDisplay(confusion_matrix=cm_norm, display_labels=clf.classes_)
             
-            # Plot (notar values_format='.2f' para mostrar decimales)
+            # Plot
             disp_norm.plot(cmap='Blues', ax=ax_norm, xticks_rotation='vertical', values_format='.2f')
-            ax_norm.set_title(f"Normalized CM: {sentiment_target} - Layer {layer_num}\nMCC: {mcc_score:.3f}")
-            ax_norm.grid(False) # Desactivar grid interno para limpieza visual
+            ax_norm.set_title(f"Normalized CM: {sentiment_target} - Layer {layer_num}\nMacro F1: {macro_f1:.3f}")
+            ax_norm.grid(False) 
             
-            # Guardar con nombre distinto
             cm_norm_filename = f"cm_norm_layer_{layer_num:02d}.png"
             cm_norm_path = os.path.join(cm_target_dir, cm_norm_filename)
             plt.tight_layout()
@@ -223,8 +282,7 @@ for sentiment_target in SENTIMENT_TARGETS:
 
         # --- 7. Imprimir Resumen ---
         print(f"\n>> Layer {layer_num} | {sentiment_target}")
-        display_cols = ['accuracy', 'macro_f1', 'control_macro_f1', 'mcc', 'control_mcc', 'normalized_mcc']
-        # Convertimos a string formateado
+        display_cols = ['accuracy', 'macro_f1', 'control_macro_f1', 'normalized_macro_f1']
         row_str = " | ".join([f"{k}: {metrics_row[k]:.4f}" for k in display_cols])
         print(f"   GENERAL: {row_str}")
         
@@ -239,7 +297,7 @@ for sentiment_target in SENTIMENT_TARGETS:
 # =============================================================================
 
 df_results = pd.DataFrame(all_metrics_rows)
-csv_path = os.path.join(RESULTS_DIR_BASE, f'full_probing_metrics_{LLM_USED}_final.csv')
+csv_path = os.path.join(RESULTS_DIR_BASE, f'full_probing_metrics_{LLM_USED}_final_F1.csv')
 df_results.to_csv(csv_path, index=False)
 print(f"\nDataFrame completo guardado en: {csv_path}")
 
@@ -248,13 +306,10 @@ palette = sns.color_palette("tab10", n_colors=len(SENTIMENT_TARGETS))
 color_map = {target: color for target, color in zip(SENTIMENT_TARGETS, palette)}
 
 # --- PLOT 0: Normalized Entropy Comparison (Bar Plot) ---
+# (Este se mantiene igual ya que es sobre los datos, no sobre la métrica)
 plt.figure(figsize=(10, 6))
-
-# 1. Extract unique entropy values per taxonomy
 entropy_df = df_results[['taxonomy', 'imbalance_entropy']].drop_duplicates().sort_values('taxonomy')
 
-# 2. Create Bar Plot
-# We use hue=taxonomy to strictly apply your 'color_map' dictionary
 ax = sns.barplot(
     data=entropy_df, 
     x='taxonomy', 
@@ -264,19 +319,16 @@ ax = sns.barplot(
     dodge=False
 )
 
-# 3. Styling
 plt.title('Class Balance Comparison (Normalized Entropy)', fontsize=15)
 plt.xlabel('Taxonomy', fontsize=12)
 plt.ylabel('Normalized Entropy\n(0 = Highly Imbalanced, 1 = Balanced)', fontsize=12)
-plt.ylim(0, 1.15) # Extra headroom for labels
+plt.ylim(0, 1.15) 
 plt.axhline(1.0, color='gray', linestyle='--', alpha=0.5)
 
-# 4. Add numeric labels on top of bars
 for container in ax.containers:
     ax.bar_label(container, fmt='%.3f', padding=3, fontsize=11, fontweight='bold')
 
-# Clean up
-plt.legend([], [], frameon=False) # Remove redundant legend
+plt.legend([], [], frameon=False)
 plt.tight_layout()
 plt.savefig(os.path.join(PLOTS_DIR_BASE, '00_taxonomy_imbalance.png'))
 plt.show()
@@ -302,28 +354,8 @@ plt.tight_layout()
 plt.savefig(os.path.join(PLOTS_DIR_BASE, '01_absolute_performance_f1.png'))
 plt.show()
 
-# --- PLOT 2: Absolute Performance (MCC) ---
-plt.figure(figsize=(14, 8))
-for target in SENTIMENT_TARGETS:
-    subset = df_results[df_results['taxonomy'] == target]
-    if subset.empty: continue
-    
-    c = color_map[target]
-    # Real Model
-    plt.plot(subset['layer'], subset['mcc'], marker='o', label=f'{target}', color=c)
-    # Control Model
-    plt.plot(subset['layer'], subset['control_mcc'], linestyle='--', alpha=0.6, color=c)
-
-plt.title('Absolute Performance (MCC) vs Control', fontsize=16)
-plt.xlabel('Layer', fontsize=12)
-plt.ylabel('Matthews Correlation Coefficient (MCC)', fontsize=12)
-plt.legend(title="Taxonomy (Dashed = Control)")
-plt.grid(True, alpha=0.5)
-plt.tight_layout()
-plt.savefig(os.path.join(PLOTS_DIR_BASE, '02_absolute_performance_mcc.png'))
-plt.show()
-
-# --- PLOT 3: Normalized MCC (Comparison) ---
+# --- PLOT 2: Normalized Macro F1 (Comparison) ---
+# MODIFICADO: Ahora usa 'normalized_macro_f1' en lugar de 'normalized_mcc'
 plt.figure(figsize=(14, 8))
 for target in SENTIMENT_TARGETS:
     subset = df_results[df_results['taxonomy'] == target]
@@ -332,26 +364,26 @@ for target in SENTIMENT_TARGETS:
     c = color_map[target]
     ent = subset['imbalance_entropy'].iloc[0]
     
-    # Normalized Score
-    plt.plot(subset['layer'], subset['normalized_mcc'], marker='o', linewidth=2, 
+    # Normalized Score (Usando F1)
+    plt.plot(subset['layer'], subset['normalized_macro_f1'], marker='o', linewidth=2, 
              label=f"{target} (Ent: {ent:.2f})", color=c)
 
-plt.title('Normalized MCC (Selectivity over Memorization)', fontsize=16)
+plt.title('Normalized Macro F1 (Selectivity over Memorization)', fontsize=16)
 plt.xlabel('Layer', fontsize=12)
-plt.ylabel('Normalized MCC Score', fontsize=12)
+plt.ylabel('Normalized Macro F1 Score', fontsize=12)
 plt.ylim(-0.1, 1.05) 
 plt.axhline(0, color='black', linewidth=0.5)
 plt.legend(fontsize=12, title="Taxonomy (Entropy: 1=Bal, 0=Imbal)")
 plt.grid(True, linestyle='--', alpha=0.7)
 
-# Nota explicativa
-text_str = "Score = (MCC_Real - MCC_Control) / (1 - MCC_Control)"
+# Nota explicativa actualizada
+text_str = "Score = (F1_Real - F1_Control) / (1 - F1_Control)"
 plt.text(0.02, 0.02, text_str, transform=plt.gca().transAxes, fontsize=10,
          verticalalignment='bottom', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
 
 plt.tight_layout()
-plt.savefig(os.path.join(PLOTS_DIR_BASE, '03_comparison_normalized_mcc.png'))
+plt.savefig(os.path.join(PLOTS_DIR_BASE, '02_comparison_normalized_f1.png'))
 plt.show()
 
-print("\n--- ALL PLOTS AND MATRICES GENERATED SUCCESSFULLY ---")
+print("\n--- ALL PLOTS (BASED ON MACRO F1) AND MATRICES GENERATED SUCCESSFULLY ---")
 #%%

@@ -12,11 +12,13 @@ from sklearn.metrics import pairwise_distances
 
 # --- Configuration ---
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-LLM_NAME = "Llama-2-7b-chat-hf"
+LLM_NAME = "Llama-2-7b-chat-hf" #"Qwen2.5-14B-Instruct"# 
+DATASET = "generated_prompts"
+MODEL_SHAPE = 4096 # 5120 # 
 # Asegúrate de que esta ruta sea correcta
-DATA_PATH = "/home/jcuello/emotion_drift/data/03_activations/generated_prompts_Llama-2-7b-chat-hf_20251014_203636_FINAL_WITH_RATINGS_AND_CATS.pkl"
+DATA_PATH = "/home/jcuello/emotion_drift/data/03_activations/generated_prompts_Llama-2-7b-chat-hf_20251014_203636_FINAL_WITH_RATINGS_AND_CATS.pkl" # "/home/jcuello/emotion_drift/data/03_activations/generated_prompts_Qwen2.5-14B-Instruct_20251220_225401_FINAL.pkl" # 
 SENTIMENT_TARGETS = ['ekman_basic_emotions', 'plutchik_wheel', 'go_emotions']
-OUTPUT_DIR = "/home/jcuello/emotion_drift/results/rsa_analysis_weighted" # Cambié el dir para no sobreescribir
+OUTPUT_DIR = f"/home/jcuello/emotion_drift/results/{LLM_NAME}_{DATASET}/rsa_analysis"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # RSA Parameters
@@ -178,7 +180,7 @@ for layer_num in range(num_layers):
     for i in range(len(df_original)):
         try:
             act = df_original['activations'].iloc[i].iloc[layer_num]['last_token_activation']
-            if isinstance(act, np.ndarray) and act.squeeze().shape == (4096,):
+            if isinstance(act, np.ndarray) and act.squeeze().shape == (MODEL_SHAPE,):
                 X_list.append(act.squeeze())
                 y_df_list.append(df_original.iloc[i])
         except: continue

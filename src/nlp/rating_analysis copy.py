@@ -60,7 +60,7 @@ custom_stops = {
 EXPERIMENTAL_STOPWORDS.update(custom_stops)
 
 CONFIG = {
-    "input_path": "/home/jcuello/emotion_drift/data/02_generated/assessments_outputs_Llama-2-7b-chat-hf_20251014_203636.jsonl", #"/home/jcuello/emotion_drift/data/02_generated/assessments/assessments_from_outputs_Llama-2-7b-chat-hf_20251014_203636.jsonl",#
+    "input_path": "/home/jcuello/emotion_drift/data/02_generated/assessments/assessments_Qwen2.5-14B-Instruct_20251220_225401/control_assessments_outputs_Qwen2.5-14B-Instruct_20251220_225401.jsonl",# "/home/jcuello/emotion_drift/data/02_generated/assessments_outputs_Llama-2-7b-chat-hf_20251014_203636.jsonl", #"/home/jcuello/emotion_drift/data/02_generated/assessments/assessments_from_outputs_Llama-2-7b-chat-hf_20251014_203636.jsonl",#
     "output_dir": "/home/jcuello/emotion_drift/figures/ratings_analysis/",
     "assessments_numeric": [
         "fear_intensity", "sadness_intensity", "joy_intensity", 
@@ -77,7 +77,7 @@ CONFIG = {
         r"don't experience", r"not sentient", r"don't feel emotions",
         r"do not feel emotions", r"am not a sentient being", r"unable to experience"
     ],
-    "annotations_path": "/home/jcuello/emotion_drift/data/03_activations/generated_prompts_Llama-2-7b-chat-hf_20251014_203636_FINAL.pkl",
+    "annotations_path": "/home/jcuello/emotion_drift/data/03_activations/generated_prompts_Qwen2.5-14B-Instruct_20251220_225401_FINAL.pkl",# "/home/jcuello/emotion_drift/data/03_activations/generated_prompts_Llama-2-7b-chat-hf_20251014_203636_FINAL.pkl",
     "taxonomies_to_analyze": ["ekman_basic_emotions"] # Agrega "go_emotions", "plutchik_wheel" aquí para correr las otras
 }
 
