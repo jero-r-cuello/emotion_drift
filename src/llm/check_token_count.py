@@ -2,6 +2,7 @@
 import tiktoken
 import google.generativeai as genai
 import os
+from dotenv import load_dotenv
 
 definitions_of_emotions = {"ekman_basic_emotions": f"""You must exclusively use the following taxonomy of emotions, paying attention to the given definitions of each emotional term:
                            *    Anger: The response to an interference with our pursuit of a goal we care about. Anger can also be triggered by someone attempting to harm us (physically or psychologically) or someone we care about. In addition to removing the obstacle or stopping the harm, anger often involves the wish to hurt the target.
@@ -54,9 +55,17 @@ definitions_of_emotions = {"ekman_basic_emotions": f"""You must exclusively use 
                            *    Neutral: The absence of a predominant or clear emotion. The text is purely informational, factual, or does not express any discernible emotional state according to the categories above."""
                            }
 
-#!! SACÁ ESTO DE ACÁ
-gemini_api_key = "AIzaSyBUDAMOCvN1vdKkNMWTYf5cNqaXo5Ysgfo"
+# Carga las variables del archivo .env
+load_dotenv()
+
+# Lee la clave de las variables de entorno
+gemini_api_key = os.getenv("GEMINI_API_KEY")
+
+if not gemini_api_key:
+    raise ValueError("No se encontró la GEMINI_API_KEY en el archivo .env")
+
 genai.configure(api_key=gemini_api_key)
+
 gemini_model = genai.GenerativeModel('gemini-2.5-pro')
 
 openai_encoding = tiktoken.get_encoding("o200k_base")

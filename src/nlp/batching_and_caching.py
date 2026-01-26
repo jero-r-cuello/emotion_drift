@@ -7,6 +7,7 @@ from openai import OpenAI
 import pandas as pd
 import numpy as np
 import json
+from dotenv import load_dotenv
 
 def check_credits(api_key):
     response = requests.get(
@@ -249,12 +250,14 @@ definitions_of_emotions = {"ekman_basic_emotions": f"""You must exclusively use 
 models_names = ["google/gemini-2.5-pro",
                 "openai/gpt-5"]
 #%%
-#!! NO TE OLVIDES ESTO ACÁ!!!!! # Está la mía
-api_key = "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"
+load_dotenv() # Carga el archivo .env
+
+api_key = os.getenv("OPENROUTER_API_KEY") # Usa el nombre que pusiste en el .env
+
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key=api_key
-    )
+    api_key=api_key,
+)
 
 ## Cache hit with GPT-5
 model_name = models_names[1]
@@ -332,9 +335,9 @@ if total_calls > 0:
 ## Batching with GPT-5 (OpenAI key needed)
 from openai import OpenAI
 
-#!! NO TE OLVIDES ESTO ACÁ!!!!! # Está la mía
-api_key = "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"
+load_dotenv()
 
+api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
 
 batch_input_file = client.files.create(
@@ -361,8 +364,10 @@ from openai import OpenAI
 import pandas as pd
 import json
 
-#!! NO TE OLVIDES ESTO ACÁ!!!!!
-api_key = ""
+load_dotenv()
+
+api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=api_key)
 
 df = pd.read_csv("/home/jcuello/emotion_drift/data/04_annotated/anotacion_manual_generated_responses - Sheet1.csv")
 generated_responses = df["response_text"].tolist()

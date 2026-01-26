@@ -10,6 +10,7 @@ import pandas as pd
 import numpy as np
 import json
 import itertools
+from dotenv import load_dotenv
 
 def check_credits(api_key):
     response = requests.get(
@@ -177,8 +178,9 @@ definitions_of_emotions = {"ekman_basic_emotions": f"""You must exclusively use 
                            }
 
 #!! NO TE OLVIDES ESTO ACÁ!!!!! # Está la mía
-api_key = "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"
+load_dotenv()
 
+api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
 
 models_names = [

@@ -6,3 +6,4 @@ data/03_activations/
 figures/
 *.joblib
 models/
+.env

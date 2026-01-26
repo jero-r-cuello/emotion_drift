@@ -6,6 +6,7 @@ import requests
 import re
 import pandas as pd
 from openai import OpenAI
+from dotenv import load_dotenv
 
 def check_credits(api_key):
     response = requests.get(
@@ -232,11 +233,13 @@ models_names = ["google/gemini-2.5-pro",
                 "anthropic/claude-opus-4",
                 "x-ai/grok-4"]
 
-#!! NO TE OLVIDES ESTO ACÁ!!!!!
-api_key = "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"
+load_dotenv() # Carga el archivo .env
+
+api_key = os.getenv("OPENROUTER_API_KEY") # Usa el nombre que pusiste en el .env
+
 client = OpenAI(
-base_url="https://openrouter.ai/api/v1",
-api_key=api_key,
+    base_url="https://openrouter.ai/api/v1",
+    api_key=api_key,
 )
 
 results_data = []

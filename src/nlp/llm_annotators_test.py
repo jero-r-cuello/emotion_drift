@@ -7,6 +7,7 @@ from openai import OpenAI
 import pandas as pd
 import numpy as np
 import json
+from dotenv import load_dotenv
 
 def check_credits(api_key):
     response = requests.get(
@@ -194,12 +195,14 @@ models_names = ["google/gemini-2.5-flash",
 
 generated_responses = pd.read_csv("/home/jcuello/emotion_drift/data/04_annotated/anotacion_manual_generated_responses - Sheet1.csv")["response_text"].tolist()
 
-#!! NO TE OLVIDES ESTO ACÁ!!!!! # Está puesta la mía
-api_key = ""
+load_dotenv() # Carga el archivo .env
+
+api_key = os.getenv("OPENROUTER_API_KEY") # Usa el nombre que pusiste en el .env
+
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key=api_key
-    )
+    api_key=api_key,
+)
 
 
 # Lista para almacenar los resultados en un formato estructurado
