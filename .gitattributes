@@ -1,2 +1,4 @@
 *.jsonl filter=lfs diff=lfs merge=lfs -text
 notebooks/rating_analysis.ipynb filter=lfs diff=lfs merge=lfs -text
+data/02_generated/*.jsonl filter=lfs diff=lfs merge=lfs -text
+data/04_annotated/*.jsonl filter=lfs diff=lfs merge=lfs -text

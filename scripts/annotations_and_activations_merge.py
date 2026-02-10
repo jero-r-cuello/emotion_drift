@@ -9,12 +9,12 @@ import seaborn as sns
 
 # ================= CONFIGURACIÓN =================
 BASE_DIR = "/home/jcuello/emotion_drift"
-RUN_TO_LOAD = "Qwen2.5-14B-Instruct_20251220_225401"#"Llama-2-7b-chat-hf_20251014_203636"
-DATASET_USED = "generated_prompts"
-ANNOTATIONS_FILE = "qwen_annotated_results.jsonl"
+RUN_TO_LOAD = "Llama-2-7b-chat-hf_20260127_151151" # "Llama-2-7b-chat-hf_20260127_151453" # "Qwen2.5-14B-Instruct_20251220_225401"# "Llama-2-7b-chat-hf_20251014_203636"
+DATASET_USED = "andyzou_situations" 
+ANNOTATIONS_FILE = "batch_results_Llama-2-7b-chat-hf_20260127_151151.jsonl"
 
 INPUT_PKL_PATH = os.path.join(BASE_DIR, "data", "03_activations", f"{DATASET_USED}_{RUN_TO_LOAD}.pkl")
-ANNOTATIONS_JSONL_PATH = os.path.join(BASE_DIR, "data", "04_annotated",ANNOTATIONS_FILE) 
+ANNOTATIONS_JSONL_PATH = os.path.join(BASE_DIR, "data", "04_annotated", ANNOTATIONS_FILE) 
 OUTPUT_PKL_PATH = os.path.join(BASE_DIR, "data", "03_activations", f"{DATASET_USED}_{RUN_TO_LOAD}_FINAL.pkl")
 
 # Carpeta para guardar los gráficos

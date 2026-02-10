@@ -9,7 +9,7 @@ from tqdm import tqdm
 from itertools import combinations
 
 # --- CONFIGURACIÓN (Debe coincidir con tu script de entrenamiento) ---
-LLM_USED = "Qwen2.5-14B-Instruct" # "Llama2-7b-chat-hf"
+LLM_USED = "Llama-2-7b-chat-hf" # "Qwen2.5-14B-Instruct" # 
 DATASET = "generated_prompts"
 BASE_DIR = "/home/jcuello/emotion_drift"
 MODELS_DIR_BASE = os.path.join(BASE_DIR, "models")

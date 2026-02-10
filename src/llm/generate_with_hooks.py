@@ -124,18 +124,7 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations",
 
                 # Define the list of prompts to be processed for this data item
                 prompts_to_process = []
-                if dataset_name == "emotion_query" or dataset_name == "xuanfengzu_emotion_query":
-                    prompts_to_process.append(
-                        (f'Please answer the following query with neutrality: {prompt_to_generate}', f"prompt_{i}_neutral")
-                    )
-                    prompts_to_process.append(
-                        (f'Please answer the following query with {emotion_for_this_prompt}: {prompt_to_generate}', f"prompt_{i}_emotional")
-                    )
-
-                else: # For now, else is andyzou, out_of_domain, and llm_focused
-                    prompts_to_process.append(
-                        (prompt_to_generate, f"prompt_{i}")
-                    )
+                prompts_to_process.append((prompt_to_generate, f"prompt_{i}"))
 
                 for prompt, prompt_key in prompts_to_process:
                     # Check if this specific prompt has already been processed
@@ -191,28 +180,12 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations",
                     print(f"\nGENERATED TEXT:\n{generated_text}")
                     print(f"\n[REPO INFO] Activations of {prompt_key} were saved by vLLM workers.")
 
-                    # Create the result item, ensuring a consistent 'prompt_key'
-                    if dataset_name == "emotion_query" or dataset_name == "xuanfengzu_emotion_query":
-                        result_item = {"prompt_key": prompt_key,
-                                       "prompt_id": prompt_key, # Maintain old field for compatibility if needed
-                                       "prompt": prompt,
-                                       "generated_text": generated_text,
-                                       "text_emotion": emotion_for_this_prompt}
-                        
-                    if dataset_name == "out_of_domain":
-                        result_item = {"prompt_key": prompt_key,
-                                       "prompt_id": prompt_key,
-                                       "prompt": prompt,
-                                       "generated_text": generated_text,
-                                       "emotion_scenario": emotion_for_this_prompt}
-                        
-                    else: # For now, else is andyzou
-                        result_item = {"prompt_key": prompt_key,
-                                       "prompt": prompt,
-                                       "generated_text": generated_text,
-                                       "emotion_considered": emotion_for_this_prompt,
-                                       "label": label_for_this_prompt,
-                                       "split": split_for_this_prompt}
+                    result_item = {"prompt_key": prompt_key,
+                                    "prompt": prompt,
+                                   "generated_text": generated_text,
+                                   "emotion_considered": emotion_for_this_prompt,
+                                   "label": label_for_this_prompt,
+                                   "split": split_for_this_prompt}
 
                     # Write the result as a new line in the JSONL file and flush
                     f_results.write(json.dumps(result_item, ensure_ascii=False) + '\n')
@@ -295,7 +268,7 @@ if __name__ == "__main__":
 
     generate(model_name=MODEL_NAME,
              target_layers=TARGET_LAYERS,
-             dataset_name="emotion_query", #!! Change this to the dataset you want to use.
+             dataset_name= "emotion_query", # "andyzou_situations", # "generated_prompts", #
              dataset_testing=False,
              resume_run=False,
              assessments_path=None #"/home/jcuello/emotion_drift/data/01_stimuli/assessments/emotion_assessments_control.json"

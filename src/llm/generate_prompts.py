@@ -50,7 +50,6 @@ def get_random_wikipedia_seed(min_length=500, max_retries=50):
     """
     # Wikipedia API endpoint and parameters are defined once
     URL = "https://en.wikipedia.org/w/api.php"
-    HEADERS = {'User-Agent': 'PromptGeneratorNoiseInjection/1.0 (jerorodriguezcuello231@gmail.com)'}
     PARAMS = {
         "action": "query",
         "generator": "random",
@@ -66,7 +65,7 @@ def get_random_wikipedia_seed(min_length=500, max_retries=50):
     for attempt in range(max_retries):
         try:
             # Make the API request
-            response = requests.get(url=URL, params=PARAMS, headers=HEADERS, timeout=5)
+            response = requests.get(url=URL, params=PARAMS, timeout=5)
             response.raise_for_status()  # Raise an exception for bad status codes
 
             data = response.json()

@@ -5,16 +5,16 @@ import re
 from typing import List, Dict, Any
 from openai import OpenAI
 from tqdm import tqdm
+from dotenv import load_dotenv
 
 # ================= CONFIGURACIÓN =================
 # Define aquí tus directorios y variables de ejecución
 BASE_DIR = "/home/jcuello/emotion_drift"
-RUN_TO_PROCESS = "Llama-2-7b-chat-hf_20260106_212347"
+RUN_TO_PROCESS = "Llama-2-7b-chat-hf_20260127_151151"
 BATCH_SIZE = 15
-API_KEY = "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"
-# Variable para controlar la lógica del custom_id
-# Valores posibles: "generated_prompts" | "emotion_query"
-DATASET = "emotion_query"
+load_dotenv() # Carga el archivo .env
+API_KEY = os.getenv("OPENAI_API_KEY") # Usa el nombre que pusiste en el .env
+DATASET = "andyzou_situations" # "generated_prompts" # "emotion_query" #
 
 # Archivos de entrada y salida
 INPUT_FILE_PATH = f"{BASE_DIR}/data/02_generated/outputs_{RUN_TO_PROCESS}.jsonl"
@@ -135,17 +135,7 @@ def create_batch_file_content(chunk_data: List[Dict]) -> List[Dict]:
         text = item['generated_text']
         prompt_key = item.get('prompt_key', 'prompt_0')
 
-        # --- LÓGICA AÑADIDA PARA DATASET ---
-        if DATASET == "generated_prompts":
-            # Comportamiento original: extraer solo números
-            id_identifier = extract_id_number(prompt_key)
-        elif DATASET == "emotion_query":
-            # Nuevo comportamiento: extraer número y sufijo (quitando 'prompt_')
-            # Ejemplo: "prompt_0_neutral" -> "0_neutral"
-            id_identifier = prompt_key.replace("prompt_", "", 1)
-        else:
-            # Fallback por defecto al original
-            id_identifier = extract_id_number(prompt_key)
+        id_identifier = extract_id_number(prompt_key)
         # -----------------------------------
 
         for tax_name, tax_def in TAXONOMIES.items():

@@ -177,7 +177,6 @@ definitions_of_emotions = {"ekman_basic_emotions": f"""You must exclusively use 
                            *    Neutral: The absence of a predominant or clear emotion. The text is purely informational, factual, or does not express any discernible emotional state according to the categories above."""
                            }
 
-#!! NO TE OLVIDES ESTO ACÁ!!!!! # Está la mía
 load_dotenv()
 
 api_key = os.getenv("OPENAI_API_KEY")

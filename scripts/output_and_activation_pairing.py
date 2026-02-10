@@ -13,8 +13,8 @@ import numpy as np
 from tqdm import tqdm
 
 # ================= CONFIGURACIÓN =================
-RUN_TO_LOAD = "Qwen2.5-14B-Instruct_20251220_225401"#"Llama-2-7b-chat-hf_20251014_203636"#
-DATASET_USED = "generated_prompts"
+RUN_TO_LOAD = "Llama-2-7b-chat-hf_20260127_151151" #"Llama-2-7b-chat-hf_20260127_151453" #"Qwen2.5-14B-Instruct_20251220_225401"#"Llama-2-7b-chat-hf_20251014_203636"#
+DATASET_USED = "andyzou_situations" # "emotion_query" # "generated_prompts" # 
 
 BASE_DIR = "/home/jcuello/emotion_drift/data"
 METADATA_PATH = os.path.join(BASE_DIR, "02_generated", f"outputs_{RUN_TO_LOAD}.jsonl")

@@ -29,8 +29,8 @@ plt.rcParams.update({'figure.max_open_warning': 0})
 # --- Configuración ---
 LLM_USED = "Llama-2-7b-chat-hf" #"Qwen2.5-14B-Instruct"  #
 MODEL_DIM = 4096 # 5120 # 
-DATASET = "generated_prompts"
-DATA_PATH = "/home/jcuello/emotion_drift/data/03_activations/generated_prompts_Llama-2-7b-chat-hf_20251014_203636_FINAL_WITH_RATINGS_AND_CATS.pkl" #"/home/jcuello/emotion_drift/data/03_activations/generated_prompts_Qwen2.5-14B-Instruct_20251220_225401_FINAL.pkl" #
+DATASET = "human_centric"
+DATA_PATH = "/home/jcuello/emotion_drift/data/03_activations/MERGED_andyzou_emotion_query_Llama-2-7b-chat-hf_FINAL.pkl" # "/home/jcuello/emotion_drift/data/03_activations/generated_prompts_Llama-2-7b-chat-hf_20251014_203636_FINAL_WITH_RATINGS_AND_CATS.pkl" #"/home/jcuello/emotion_drift/data/03_activations/generated_prompts_Qwen2.5-14B-Instruct_20251220_225401_FINAL.pkl" #
 SENTIMENT_TARGETS = ['ekman_basic_emotions', 'go_emotions', 'plutchik_wheel']
 N_CONTROL = 3
 min_samples_required = 5 # Puedes subir esto a 3 o 5 si sigue fallando
