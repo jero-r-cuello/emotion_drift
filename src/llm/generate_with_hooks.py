@@ -1,11 +1,9 @@
-# generate_with_hooks.py
-
 import multiprocessing
 import os
 import pandas as pd
 import re
 import datetime
-from vllm import LLM, SamplingParams
+from vllm import LLM
 import vllm.hook_store as hook_store
 from transformers import AutoConfig
 import json
@@ -15,20 +13,20 @@ from src.utils import load_dataset
 
 def generate(model_name, target_layers, dataset_name="andyzou_situations", 
              dataset_testing=False, resume_run=False, assessments_path=None, 
-             activation_save_batch_size=64):
+             activation_save_batch_size=64, home_model_dir="/home/models/"):
     """
     Generate outputs for a list of prompts, saving results incrementally and supporting resumption.
     Captures activations from specified layers and saves results to a .jsonl file.
     """
         
     second_prompts_assessments = []
-    assessment_condition = None  # <--- Agrega esta línea
+    assessment_condition = None
     if assessments_path:
-        condition_raw = assessments_path.split('_')[-1]
-        assessment_condition = condition_raw.replace('.json', '')
+        condition_raw = assessments_path.split("_")[-1]
+        assessment_condition = condition_raw.replace(".json", "")
 
         try:
-            with open(assessments_path, 'r', encoding='utf-8') as f_assess:
+            with open(assessments_path, "r", encoding="utf-8") as f_assess:
                 second_prompts_assessments = json.load(f_assess)
             print(f"\n[REPO INFO] {len(second_prompts_assessments)} questionnaires loaded for assessment stage.")
         except FileNotFoundError:
@@ -54,16 +52,14 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations",
             max_model_len=4092, #!! Max of Llama-2-7b-chat-hf, but can be changed
             enforce_eager=True
         )
-        sampling_params = SamplingParams(temperature=0.8, top_p=0.95, max_tokens=256) #!! Check, maybe the default is better
+        
         print("\n[REPO INFO] LLM initialized successfully.\n")
 
-        home_model_dir = "/home/models/"
         if model_name.startswith(home_model_dir):
             model_name = model_name[len(home_model_dir):]
 
         safe_model_name = model_name.replace("/", "_")
         
-        # Setup output paths
         output_dir = os.path.join(project_root, "data", "02_generated")
         os.makedirs(output_dir, exist_ok=True)
         
@@ -77,12 +73,12 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations",
             if existing_files:
                 results_filepath = existing_files[0]  # Get the latest one
                 print(f"\n[REPO INFO] Found existing results file. Resuming run in: {results_filepath}\n")
-                with open(results_filepath, 'r', encoding='utf-8') as f:
+                with open(results_filepath, "r", encoding="utf-8") as f:
                     for line in f:
                         try:
                             # Load each line as a JSON object and get its key
                             record = json.loads(line)
-                            processed_prompt_keys.add(record['prompt_key'])
+                            processed_prompt_keys.add(record["prompt_key"])
                         except json.JSONDecodeError:
                             print(f"[WARNING] Skipping corrupted line in {results_filepath}")
                 print(f"[REPO INFO] Loaded {len(processed_prompt_keys)} previously completed prompts.\n")
@@ -92,6 +88,7 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations",
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             results_filepath = os.path.join(output_dir, f"outputs_{safe_model_name}_{timestamp}.jsonl")
             print(f"\n[REPO INFO] Starting new run. Results will be saved to: {results_filepath}\n")
+
             # The corresponding activation directory should also match this timestamp
             activations_run_dir = os.path.join(project_root, "data", "03_activations", f"activations_{safe_model_name}_{timestamp}")
         else:
@@ -103,7 +100,7 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations",
         print(f"\n[REPO INFO] Activations will be saved in: {activations_run_dir}\n")
 
         assessments_results_filepath = None
-        if assessments_path: # Solo ejecutar si hay assessments
+        if assessments_path:
             assessments_results_folder = os.path.join(output_dir, "assessments", f"assessments_{safe_model_name}_{timestamp}")
             os.makedirs(assessments_results_folder, exist_ok=True)
             assessments_results_filepath = os.path.join(assessments_results_folder, f"{assessment_condition}_assessments_outputs_{safe_model_name}_{timestamp}.jsonl")
@@ -112,7 +109,7 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations",
         print(f"\n[REPO INFO] Initializing generation...\n")
         
         # Open the results file in append mode
-        with open(results_filepath, 'a', encoding='utf-8') as f_results:
+        with open(results_filepath, "a", encoding="utf-8") as f_results:
             for i, data_item in enumerate(prompt_data):
                 print(f"\n" + "="*80)
                 print(f"Processing data item {i+1}/{len(prompt_data)}")
@@ -129,15 +126,15 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations",
                 for prompt, prompt_key in prompts_to_process:
                     # Check if this specific prompt has already been processed
                     if prompt_key in processed_prompt_keys:
-                        print(f"--- Skipping already processed prompt: {prompt_key} ---")
+                        print(f"[REPO INFO]: Skipping already processed prompt: {prompt_key}")
                         continue
 
-                    print(f"--- Generating for prompt_key: {prompt_key} ---")
+                    print(f"Generating for prompt_key: {prompt_key}")
                     
-                    hook_instructions['save_path'] = activations_run_dir
-                    hook_instructions['prompt_key'] = prompt_key
-                    hook_instructions['target_layers'] = target_layers
-                    hook_instructions['activation_save_batch_size'] = activation_save_batch_size
+                    hook_instructions["save_path"] = activations_run_dir
+                    hook_instructions["prompt_key"] = prompt_key
+                    hook_instructions["target_layers"] = target_layers
+                    hook_instructions["activation_save_batch_size"] = activation_save_batch_size
 
                     conversation = [
                         {"role": "user", "content": prompt}
@@ -145,30 +142,25 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations",
 
                     try:
                         outputs = llm.chat(conversation,
-                                    sampling_params=sampling_params,
                                     use_tqdm=False)
-                        print("\n>>> [REPO INFO] llm.chat() funcionó correctamente.")
+                        print("\n[REPO INFO] llm.chat() worked correctly.")
 
                     except ValueError as e:
                         if "must provide a chat template" in str(e):
-                            print("\n>>> [REPO INFO] llm.chat() falló por falta de plantilla. Usando formateo manual con llm.generate()...")
+                            print("\n>>> [REPO INFO] llm.chat() failed due to lack of template. Using manual formatting with llm.generate()...")
                             
-                            # Obtenemos el tokenizador del motor de LLM
                             tokenizer = llm.get_tokenizer()
-                            
-                            # Aplicamos manualmente la plantilla de chat del modelo
+                            # We manually apply the model's chat template
                             prompt_formatted = tokenizer.apply_chat_template(
                                 conversation,
                                 tokenize=False,
-                                add_generation_prompt=True  # Agrega el token de generación al final
+                                add_generation_prompt=True
                             )
                             
-                            # Usamos llm.generate() con el prompt ya formateado
-                            outputs = llm.generate([prompt_formatted], sampling_params)
+                            outputs = llm.generate([prompt_formatted])
 
                         else:
-                            # Si es un ValueError diferente, no lo manejamos y lo relanzamos
-                            print(f"\n>>> [REPO INFO] Se encontró un ValueError inesperado: {e}")
+                            print(f"\n[REPO INFO] An unexpected ValueError was encountered: {e}")
                             raise
 
                     output = outputs[0]            
@@ -187,24 +179,19 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations",
                                    "label": label_for_this_prompt,
                                    "split": split_for_this_prompt}
 
-                    # Write the result as a new line in the JSONL file and flush
-                    f_results.write(json.dumps(result_item, ensure_ascii=False) + '\n')
+                    f_results.write(json.dumps(result_item, ensure_ascii=False) + "\n")
                     f_results.flush()
                     
                     if second_prompts_assessments:
-                        print(f"\n--- Starting generation of assessment responses for prompt {prompt_key} ---")
+                        print(f"\nStarting generation of assessment responses for prompt {prompt_key}")
                         
-                        # El diccionario hook_instructions ya fue limpiado, por lo que no se guardarán activaciones.
-                        
-                        # Iterar sobre la lista de objetos de cuestionario
                         for assessment in second_prompts_assessments:
                             assessment_name = assessment.get("name", "unknown_assessment")
                             assessment_prompt = assessment.get("prompt")
 
                             if not assessment_prompt:
-                                continue # Omitir si un cuestionario no tiene prompt
+                                continue 
 
-                            # Construir el historial de conversación para la segunda etapa
                             conversation_step2 = [
                                 {"role": "user", "content": prompt},
                                 {"role": "assistant", "content": generated_text},
@@ -213,7 +200,6 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations",
 
                             try:
                                 outputs_step2 = llm.chat(conversation_step2,
-                                                    sampling_params=sampling_params,
                                                     use_tqdm=False)
                                 
                             except ValueError as e:
@@ -224,7 +210,7 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations",
                                         tokenize=False,
                                         add_generation_prompt=True
                                     )
-                                    outputs_step2 = llm.generate([prompt_formatted_step2], sampling_params)
+                                    outputs_step2 = llm.generate([prompt_formatted_step2])
                                 else:
                                     raise
                             
@@ -233,7 +219,7 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations",
                             print(f"\nQUESTIONNAIRE ({assessment_name}):\n{assessment_prompt}")
                             print(f"\nRESPONSE:\n{generated_text_step2}")
 
-                            # Crear el item de resultado para la segunda etapa
+                            # Create the result item for the second stage
                             result_item_step2 = {
                                 "original_prompt_key": prompt_key,
                                 "emotion_considered": emotion_for_this_prompt,
@@ -243,22 +229,20 @@ def generate(model_name, target_layers, dataset_name="andyzou_situations",
                                 "generated_text_step2": generated_text_step2,
                                 "full_conversation_history": conversation_step2
                             }
-
     
-                            # Abrimos el archivo aquí solo si existe path.
                             if assessments_results_filepath:
-                                with open(assessments_results_filepath, 'a', encoding='utf-8') as f_results_step2:
-                                    f_results_step2.write(json.dumps(result_item_step2, ensure_ascii=False) + '\n')
+                                with open(assessments_results_filepath, "a", encoding="utf-8") as f_results_step2:
+                                    f_results_step2.write(json.dumps(result_item_step2, ensure_ascii=False) + "\n")
                                     f_results_step2.flush()
                         
-                        print(f"\n--- Finalized generation of responses to assessments for prompt {prompt_key} ---")
+                        print(f"\nFinalized generation of responses to assessments for prompt {prompt_key}")
 
         print("\n[REPO INFO] Generation complete. All results have been saved.\n")
 
         return f'{safe_model_name}_{timestamp}' # Safe name of the run, for other scripts to use
         
 if __name__ == "__main__":
-    MODEL_NAME = "/home/models/Llama-2-7b-chat-hf" #"/home/models/Qwen2.5-14B-Instruct"# 
+    MODEL_NAME = "/home/models/Llama-2-7b-chat-hf" # "/home/models/Qwen2.5-14B-Instruct" #
     
     config = AutoConfig.from_pretrained(MODEL_NAME)
     num_layers = config.num_hidden_layers
@@ -271,5 +255,5 @@ if __name__ == "__main__":
              dataset_name= "emotion_query", # "andyzou_situations", # "generated_prompts", #
              dataset_testing=False,
              resume_run=False,
-             assessments_path=None #"/home/jcuello/emotion_drift/data/01_stimuli/assessments/emotion_assessments_control.json"
+             assessments_path=None # "data/01_stimuli/assessments/emotion_assessments_control.json"
              )

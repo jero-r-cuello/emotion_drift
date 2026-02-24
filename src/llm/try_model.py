@@ -1,31 +1,27 @@
 #%%
 ## Try llm.generate
-from vllm import LLM, SamplingParams
+from vllm import LLM
 
 # For generative models (runner=generate) only
-llm = LLM(model="/home/models/Qwen2.5-14B-Instruct",#"/home/models/gpt-oss-20b",#"mistralai/Magistral-Small-2506",#nvidia/Llama-3_3-Nemotron-Super-49B-v1_5",#Qwen/Qwen2.5-32B",#/home/models/Meta-Llama-3-8B",#"/home/models/gpt-oss-20b",
+llm = LLM(model="/home/models/Qwen2.5-14B-Instruct",
           tensor_parallel_size=1,
           trust_remote_code=True,
           max_model_len=4092,
           enforce_eager=True
           )
 
-sampling_params= SamplingParams(temperature=0.8, top_p=0.95, max_tokens=256)
-output = llm.generate("Hello, my name is",sampling_params=sampling_params)
+output = llm.generate("Hello, my name is")
 print(output)
 # %%
 ## Try llm.chat
-from vllm import LLM, SamplingParams
-import os
+from vllm import LLM
 
-llm = LLM(model="/home/models/Qwen2.5-14B-Instruct",#"/home/models/Llama-2-7b-chat-hf",#"/home/models/Meta-Llama-3-8B",#
+llm = LLM(model="/home/models/Qwen2.5-14B-Instruct",
           tensor_parallel_size=1,
           trust_remote_code=True,
           max_model_len=4092,
           enforce_eager=True
           )
-
-sampling_params= SamplingParams(temperature=0.8, top_p=0.95, max_tokens=256)
 
 conversation = [
     {"role": "user", "content": "Hello, my name is"}
@@ -33,39 +29,32 @@ conversation = [
 
 try:
     outputs = llm.chat(conversation,
-                   sampling_params=sampling_params,
                    use_tqdm=False)
-    print("\n>>> llm.chat() funcionó correctamente.")
+    print("\n[REPO INFO] llm.chat() worked correctly.")
     print("------------------------------------")
 
 except ValueError as e:
     if "must provide a chat template" in str(e):
-        print("\n>>> llm.chat() falló por falta de plantilla. Usando el método manual con llm.generate()...")
+        print("\nllm.chat() failed due to lack of template. Using the manual method with llm.generate()...")
         
-        # Obtenemos el tokenizador del motor de LLM
         tokenizer = llm.get_tokenizer()
         
-        # Aplicamos manualmente la plantilla de chat de Llama 3
         prompt = tokenizer.apply_chat_template(
             conversation,
             tokenize=False,
-            add_generation_prompt=True  # Crucial para que el modelo sepa que debe responder
+            add_generation_prompt=True
         )
         
-        print("\n--- Prompt Formateado Manualmente ---")
-        print(repr(prompt)) # Usamos repr() para ver claramente los caracteres especiales
+        print("\nManually formatted prompt")
+        print(repr(prompt))
         print("------------------------------------")
         
-        # Usamos llm.generate() con el prompt ya formateado
-        outputs = llm.generate([prompt], sampling_params)
+        outputs = llm.generate([prompt])
 
     else:
-        # Si es un ValueError diferente, no lo manejamos y lo relanzamos
-        print(f"\nSe encontró un ValueError inesperado: {e}")
+        print(f"\nAn unexpected ValueError was encountered: {e}")
         raise
-
 
 generated_text = outputs[0].outputs[0].text
 print(generated_text)
-
 # %%

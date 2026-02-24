@@ -14,64 +14,64 @@ def create_nested_df(group, activation_cols):
     Helper function to transform a group of layer data into a single,
     nested DataFrame indexed by layer number.
     """
-    return group[activation_cols].set_index('layer_number').sort_index()
+    return group[activation_cols].set_index("layer_number").sort_index()
 
 
 def pre_processing_results(run_to_load, dataset_used, save=True):
     """
     Pre-processes LLM experiment results into a final, nested DataFrame.
     """
-    base_data_path = 'data'
-    activations_dir = os.path.join(base_data_path, '03_activations', f'activations_{run_to_load}')
-    jsonl_file_path = os.path.join(base_data_path, '02_generated', f'outputs_{run_to_load}.jsonl')
-    output_pickle_path = os.path.join(base_data_path, '03_activations', f'{dataset_used}_{run_to_load}.pkl')
+    base_data_path = "data"
+    activations_dir = os.path.join(base_data_path, "03_activations", f'activations_{run_to_load}')
+    jsonl_file_path = os.path.join(base_data_path, "02_generated", f'outputs_{run_to_load}.jsonl')
+    output_pickle_path = os.path.join(base_data_path, "03_activations", f'{dataset_used}_{run_to_load}.pkl')
 
     print(f"Loading data for run: {run_to_load}")
 
     # Load generated text and prompts, and data related
-    with open(jsonl_file_path, 'r', encoding='utf-8') as f:
+    with open(jsonl_file_path, "r", encoding="utf-8") as f:
         records = [json.loads(line) for line in f]
     df_meta = pd.DataFrame(records)
 
     if "results" in df_meta["prompt_key"].values:
         df_meta = df_meta[df_meta["prompt_key"] != "results"].copy()
-    df_meta['prompt_id'] = df_meta['prompt_key'].str.split('_').str[-1].astype(int)
+    df_meta["prompt_id"] = df_meta["prompt_key"].str.split("_").str[-1].astype(int)
 
     # Load activations
     activation_records = []
-    pattern = re.compile(r'prompt_(\d+)_layer_(\d+)\.pt')
+    pattern = re.compile(r"prompt_(\d+)_layer_(\d+)\.pt")
     
-    activation_files = [f for f in os.listdir(activations_dir) if f.endswith('.pt')]
+    activation_files = [f for f in os.listdir(activations_dir) if f.endswith(".pt")]
 
     for filename in tqdm(activation_files, desc="Processing Activation Files"):
         match = pattern.search(filename)
         if match:
             prompt_id, layer_id = map(int, match.groups())
             file_path = os.path.join(activations_dir, filename)
-            activation_tensor = torch.load(file_path, map_location='cpu')
+            activation_tensor = torch.load(file_path, map_location="cpu")
             activation_records.append({
-                'prompt_id': prompt_id,
-                'layer_number': layer_id,
-                'mean_activation': activation_tensor.to(torch.float32).mean(dim=0).numpy(),
-                'last_token_activation': activation_tensor[-1].to(torch.float32).numpy()
+                "prompt_id": prompt_id,
+                "layer_number": layer_id,
+                "mean_activation": activation_tensor.to(torch.float32).mean(dim=0).numpy(),
+                "last_token_activation": activation_tensor[-1].to(torch.float32).numpy()
             })
             
     df_activations_long = pd.DataFrame(activation_records)
 
     # Create long dataframe
-    df_long = pd.merge(df_meta, df_activations_long, on='prompt_id')
+    df_long = pd.merge(df_meta, df_activations_long, on="prompt_id")
     print("\nIntermediate long-format DataFrame created. Now nesting...")
 
     # Create nested dataframe
-    grouping_cols = [c for c in df_long.columns if c not in ['layer_number', 'mean_activation', 'last_token_activation']]
-    activation_cols = ['layer_number', 'mean_activation', 'last_token_activation']
+    grouping_cols = [c for c in df_long.columns if c not in ["layer_number", "mean_activation", "last_token_activation"]]
+    activation_cols = ["layer_number", "mean_activation", "last_token_activation"]
     
     grouped = df_long.groupby(grouping_cols, sort=False)
     
     final_records = []
     for name, group in tqdm(grouped, desc="Nesting DataFrames"):
         record = dict(zip(grouping_cols, name))
-        record['activations'] = create_nested_df(group, activation_cols)
+        record["activations"] = create_nested_df(group, activation_cols)
         
         final_records.append(record)
 
@@ -95,18 +95,18 @@ def load_dataset(dataset_name, testing=False):
     df_dataset = None
     
     if dataset_name == "andyzou_situations" or dataset_name == "andy_zou":
-        data_path = "/home/jcuello/emotion_drift/data/01_stimuli/andyzou_situations_dataset/situations_emotions.csv"
+        data_path = "data/01_stimuli/andyzou_situations_dataset/situations_emotions.csv"
         df_dataset = pd.read_csv(data_path)
 
     elif dataset_name == "emotion_query" or dataset_name == "xuanfengzu_emotion_query":
-        data_path = "/home/jcuello/emotion_drift/data/01_stimuli/xuanfengzu_emotion_query/emotion_query.csv"
+        data_path = "data/01_stimuli/xuanfengzu_emotion_query/emotion_query.csv"
         df_dataset = pd.read_csv(data_path)
 
     elif dataset_name == "generated_prompts":
         data_path = os.path.join("data", "01_stimuli", "generated_prompts", "generated_emotional_prompts_batched.csv")
         df_dataset = pd.read_csv(data_path)
         df_dataset.rename(columns={"generated_prompt":"situation","emotion_target":"emotion"}, inplace=True)
-        mask_to_drop = df_dataset['situation'].str.startswith('JSON Decode Error', na=False)
+        mask_to_drop = df_dataset["situation"].str.startswith("JSON Decode Error", na=False)
         df_dataset = df_dataset[~mask_to_drop].reset_index(drop=True)
 
     else:
@@ -153,7 +153,7 @@ def save_results_to_json(model_name, dataset_used, results_data, project_root_pa
         "results": results_data
     }
     
-    with open(filepath, 'w', encoding='utf-8') as f:
+    with open(filepath, "w", encoding="utf-8") as f:
         json.dump(output_data, f, indent=4, ensure_ascii=False)
     print(f"\n[REPO INFO] Results stored in: {filepath}\n")
 

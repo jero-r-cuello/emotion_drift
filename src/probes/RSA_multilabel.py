@@ -10,30 +10,26 @@ from sklearn.linear_model import LinearRegression
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics import pairwise_distances
 
-# --- Configuration ---
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-LLM_NAME = "Llama-2-7b-chat-hf" #"Qwen2.5-14B-Instruct"# 
+LLM_NAME = "Llama-2-7b-chat-hf" # "Qwen2.5-14B-Instruct" # 
 DATASET = "generated_prompts"
 MODEL_SHAPE = 4096 # 5120 # 
-# Asegúrate de que esta ruta sea correcta
-DATA_PATH = "/home/jcuello/emotion_drift/data/03_activations/generated_prompts_Llama-2-7b-chat-hf_20251014_203636_FINAL_WITH_RATINGS_AND_CATS.pkl" # "/home/jcuello/emotion_drift/data/03_activations/generated_prompts_Qwen2.5-14B-Instruct_20251220_225401_FINAL.pkl" # 
+
+DATA_PATH = "data/03_activations/generated_prompts_Llama-2-7b-chat-hf_20251014_203636_FINAL_WITH_RATINGS_AND_CATS.pkl" # "/home/jcuello/emotion_drift/data/03_activations/generated_prompts_Qwen2.5-14B-Instruct_20251220_225401_FINAL.pkl" # 
 SENTIMENT_TARGETS = ['ekman_basic_emotions', 'plutchik_wheel', 'go_emotions']
-OUTPUT_DIR = f"/home/jcuello/emotion_drift/results/{LLM_NAME}_{DATASET}/rsa_analysis"
+OUTPUT_DIR = f"results/{LLM_NAME}_{DATASET}/rsa_analysis"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # RSA Parameters
-N_ITERATIONS = 50        
-SAMPLES_PER_CLASS = 15   
+N_ITERATIONS = 50 # Number of bootstrap iterations       
+SAMPLES_PER_CLASS = 15 # For stratified sampling (based ONLY on primary emotion)
 
-# --- Helper Functions ---
 
 def compute_rdm_torch(tensor):
     """Computes a Dissimilarity Matrix (1 - Cosine Sim) using GPU."""
-    # Normalize vectors to unit length
     norm_tensor = torch.nn.functional.normalize(tensor, p=2, dim=1)
-    # Cosine Similarity is simply the dot product of normalized vectors
     cosine_sim = torch.mm(norm_tensor, norm_tensor.t())
-    # Dissimilarity = 1 - Similarity
+
     return 1 - cosine_sim
 
 def get_weighted_rdm(list_of_lists_labels):
@@ -42,35 +38,30 @@ def get_weighted_rdm(list_of_lists_labels):
     1. Create a vocabulary of all unique labels in this batch.
     2. Create vectors where value = 1 / (rank + 1).
        e.g. ['joy', 'fear'] -> Joy=1.0, Fear=0.5
-    3. Compute Cosine Distance (1 - CosSim) between these vectors.
-       This automatically normalizes for different numbers of labels (Ekman vs GoEmotions).
+    3. Compute cosine distance between these vectors.
     """
-    # 1. Build Universe (Vocabulary) for this batch
     unique_labels = sorted(list(set([lbl for sublist in list_of_lists_labels for lbl in sublist])))
     label_to_idx = {lbl: i for i, lbl in enumerate(unique_labels)}
     
     n_samples = len(list_of_lists_labels)
     n_dims = len(unique_labels)
     
-    # 2. Build Weighted Matrix
-    # Shape: (N_Samples, N_Unique_Labels)
     matrix = torch.zeros((n_samples, n_dims), device=DEVICE, dtype=torch.float32)
     
     for i, labels in enumerate(list_of_lists_labels):
         for rank, label in enumerate(labels):
             if label in label_to_idx:
                 idx = label_to_idx[label]
-                # Reciprocal Rank Decay: 1st=1.0, 2nd=0.5, 3rd=0.33...
+                # Reciprocal rank decay: 1st=1.0, 2nd=0.5, 3rd=0.33...
                 weight = 1.0 / (rank + 1)
                 matrix[i, idx] = weight
                 
-    # 3. Compute Distance (Re-using the torch function)
-    # Since inputs are non-negative vectors, Cosine Distance is safe and bounded [0, 1]
     return compute_rdm_torch(matrix)
 
 def compute_lexical_rdm(texts):
-    """Computes a RDM based on word overlap (Bag of Words) to control for semantics."""
+    """Computes a RDM based on word overlap (Bag of Words) to control for it."""
     vectorizer = CountVectorizer(binary=True, stop_words='english', max_features=5000)
+    
     try:
         bow = vectorizer.fit_transform(texts).toarray()
         dist = pairwise_distances(bow, metric='cosine')

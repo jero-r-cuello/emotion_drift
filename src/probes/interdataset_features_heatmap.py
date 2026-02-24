@@ -7,25 +7,18 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from tqdm import tqdm
 
-# --- CONFIGURACIÓN ---
 LLM_USED = "Llama-2-7b-chat-hf" 
-BASE_DIR = "/home/jcuello/emotion_drift"
-MODELS_DIR_BASE = os.path.join(BASE_DIR, "models")
+MODELS_DIR_BASE = "models"
 
 DATASET_A = "generated_prompts"
 DATASET_B = "human_centric"
 
-HEATMAPS_DIR = os.path.join(
-    BASE_DIR, 
-    "figures", 
-    f"cross_dataset_features_{DATASET_A}_vs_{DATASET_B}_{LLM_USED}"
-)
+HEATMAPS_DIR = os.path.join("figures", f"cross_dataset_features_{DATASET_A}_vs_{DATASET_B}_{LLM_USED}")
 
-TAXONOMIES = ['ekman_basic_emotions', 'go_emotions', 'plutchik_wheel']
+TAXONOMIES = ["ekman_basic_emotions", "go_emotions", "plutchik_wheel"]
 
-# Configurar dispositivo (GPU)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"Usando dispositivo: {device}")
+print(f"Using device: {device}")
 
 os.makedirs(HEATMAPS_DIR, exist_ok=True)
 
@@ -38,31 +31,28 @@ def load_probe_weights(dataset_name, taxonomy, layer):
     
     try:
         pipeline = joblib.load(path)
-        clf = pipeline.named_steps['logisticregression']
+        clf = pipeline.named_steps["logisticregression"]
         weights = clf.coef_
         classes = clf.classes_
         return weights, classes
     except Exception as e:
-        print(f"Error cargando {filename}: {e}")
+        print(f"Error loading {filename}: {e}")
         return None, None
 
 def align_weights_and_classes(w_a, c_a, w_b, c_b):
     """
-    Encuentra las clases comunes entre A y B, y reordena los pesos
-    para que coincidan perfectamente. Descarta clases que no estén en ambos.
+    Find the classes common between A and B, and reorder the weights
+    so that they match perfectly. Discard classes that are not in both.
     """
-    # 1. Encontrar intersección de clases y ordenarlas alfabéticamente
+    # Encontrar intersección de clases y ordenarlas alfabéticamente
     common_classes = sorted(list(set(c_a) & set(c_b)))
     
     if len(common_classes) == 0:
         return None, None, None
 
-    # 2. Encontrar los índices correspondientes en cada array original
-    # np.where devuelve una tupla, tomamos el [0][0] para sacar el índice entero
     indices_a = [np.where(c_a == cls)[0][0] for cls in common_classes]
     indices_b = [np.where(c_b == cls)[0][0] for cls in common_classes]
     
-    # 3. Filtrar y reordenar los pesos usando numpy fancy indexing
     w_a_aligned = w_a[indices_a]
     w_b_aligned = w_b[indices_b]
     
@@ -81,7 +71,6 @@ def get_cosine_similarity_matrix(weights_a, weights_b):
 def plot_and_save_heatmap(sim_matrix, classes, taxonomy, layer):
     plt.figure(figsize=(12, 10))
     
-    # Ajustar tamaño si son muchas clases
     annot_kws_size = 7 if len(classes) > 20 else 10
     
     sns.heatmap(
@@ -100,7 +89,7 @@ def plot_and_save_heatmap(sim_matrix, classes, taxonomy, layer):
     plt.title(f"Feature Similarity: {taxonomy}\n{DATASET_A} vs {DATASET_B} (Layer {layer})")
     plt.xlabel(f"Features from {DATASET_B}")
     plt.ylabel(f"Features from {DATASET_A}")
-    plt.xticks(rotation=45, ha='right')
+    plt.xticks(rotation=45, ha="right")
     plt.yticks(rotation=0)
     
     save_path = os.path.join(HEATMAPS_DIR, f"heatmap_L{layer:02d}_{taxonomy}_cross_dataset.png")
@@ -108,44 +97,32 @@ def plot_and_save_heatmap(sim_matrix, classes, taxonomy, layer):
     plt.savefig(save_path)
     plt.close()
 
-# =============================================================================
-# MAIN LOOP
-# =============================================================================
-
 MAX_LAYERS = 33 if "7b" in LLM_USED else 49 
 if "Qwen" in LLM_USED: MAX_LAYERS = 49
 
-print(f"Iniciando comparación {DATASET_A} vs {DATASET_B} (con alineación de clases)...")
+print(f"Starting comparison {DATASET_A} vs {DATASET_B} (with class alignment)...")
 
 for layer in tqdm(range(MAX_LAYERS), desc="Layers"):
     
     for taxonomy in TAXONOMIES:
-        
-        # 1. Cargar pesos
         w_a, c_a = load_probe_weights(DATASET_A, taxonomy, layer)
         w_b, c_b = load_probe_weights(DATASET_B, taxonomy, layer)
         
         if w_a is None or w_b is None:
             continue
             
-        # 2. ALINEACIÓN DE CLASES (Nuevo paso crítico)
-        # Esto soluciona si GoEmotions tiene 'neutral' en uno y en otro no, o distinto orden.
         w_a_new, w_b_new, common_classes = align_weights_and_classes(w_a, c_a, w_b, c_b)
         
         if w_a_new is None:
-            print(f"Warning: No hay clases en común para {taxonomy} layer {layer}")
+            print(f"Warning: No common classes for {taxonomy} layer {layer}")
             continue
             
-        # Debug opcional para ver si perdemos clases
         if len(common_classes) < len(c_a) or len(common_classes) < len(c_b):
-            # Solo imprimimos esto una vez para no llenar la consola, por ejemplo en capa 20
             if layer == 20: 
-                print(f"\n[Info] {taxonomy} Layer {layer}: Alineando {len(c_a)} vs {len(c_b)} clases -> {len(common_classes)} comunes.")
+                print(f"\n[Info] {taxonomy} Layer {layer}: Aligning {len(c_a)} vs {len(c_b)} classes -> {len(common_classes)} common.")
 
-        # 3. Calcular Heatmap con los pesos alineados
         sim_matrix = get_cosine_similarity_matrix(w_a_new, w_b_new)
         
-        # 4. Graficar usando las clases comunes
         plot_and_save_heatmap(sim_matrix, common_classes, taxonomy, layer)
 
-print(f"\nProceso terminado. Heatmaps guardados en: {HEATMAPS_DIR}")
+print(f"\nProcess completed. Heatmaps saved in: {HEATMAPS_DIR}")

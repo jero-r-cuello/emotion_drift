@@ -1,4 +1,9 @@
-#%%
+"""
+Pure experimental script to test caching and batching features of GPT-5.
+Not intended for use, but rather as a sandbox for understanding how these
+features work in practice and how they can be leveraged in our annotation pipeline.
+"""
+
 import os
 import time
 import requests
@@ -67,8 +72,8 @@ def create_annotation_prompt(response_text, emotion_definitions):
 
 def parse_json_from_response(response_content):
     """
-    Extrae de forma robusta una cadena JSON de la respuesta de un LLM.
-    Maneja respuestas que están envueltas en bloques de código Markdown.
+    Robustly extracts a JSON string from an LLM response.
+    Handles responses that are wrapped in Markdown code blocks.
     """
     # Buscar el inicio del bloque de código JSON
     json_block_start = response_content.find('```json')
@@ -263,7 +268,7 @@ client = OpenAI(
 model_name = models_names[1]
 emotions_definition = definitions_of_emotions["plutchik_wheel_of_emotions"]
 
-df = pd.read_csv("/home/jcuello/emotion_drift/data/04_annotated/anotacion_manual_generated_responses - Sheet1.csv")
+df = pd.read_csv("data/04_annotated/anotacion_manual_generated_responses - Sheet1.csv")
 generated_responses = df["response_text"].tolist()
 
 print("--- Iniciando prueba de caché con TEXTOS DIFERENTES ---")
@@ -369,7 +374,7 @@ load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
 
-df = pd.read_csv("/home/jcuello/emotion_drift/data/04_annotated/anotacion_manual_generated_responses - Sheet1.csv")
+df = pd.read_csv("data/04_annotated/anotacion_manual_generated_responses - Sheet1.csv")
 generated_responses = df["response_text"].tolist()
 
 model_name = "gpt-5"

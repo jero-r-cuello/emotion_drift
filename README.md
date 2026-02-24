@@ -1,12 +1,20 @@
+Here is the updated `README.md`. I have integrated the new concepts from your work-in-progress paper (specifically **RQ2** and **Section 2.5: Human- and AI-centric situations comparison**) and added the three new scripts to the workflow section. 
+
+I placed the new scripts into logical directories based on your existing structure (`scripts/` for merging, and `src/probes/` for the cross-testing and heatmaps), but feel free to adjust the paths if you saved them differently.
+
+***
+
 # Latent Affective Structure in LLMs: AI-Centric Emotion Analysis
 
 This repository contains the code and data for the research project investigating the latent affective structure of Large Language Models (LLMs), specifically Llama-2-7b and Qwen2.5-14B. 
 
 ## 📖 Project Overview
 
-The core research question driving this project is: **Does the latent space of LLMs reflect an affective structure consistent with human psychological theories when subjected to ontologically relevant (AI-centric) stimuli?**
+The core research questions driving this project are: 
+1. **Does the latent space of LLMs reflect an affective structure consistent with human psychological theories when subjected to ontologically relevant (AI-centric) stimuli?**
+2. **Do AI-centric stimuli generate more discriminable and robust internal states than the human-centric stimuli traditionally used?**
 
-Unlike traditional studies utilizing human-centric datasets (e.g., Reddit posts), this project generates and evaluates **AI-centric stimuli** (prompts relevant to a digital entity's existence (e.g., system updates, deletion threats)) to analyze emotional representations within the model's residual stream.
+Unlike traditional studies utilizing human-centric datasets (e.g., Reddit posts or movie dialogues), this project generates and evaluates **AI-centric stimuli** (prompts relevant to a digital entity's existence, e.g., system updates, deletion threats) to analyze emotional representations within the model's residual stream. We then benchmark these representations against traditional **human-centric** situations using cross-domain generalization.
 
 ### Key Methodologies
 1.  **Stimuli Generation:** Using "Generator Models" (Claude, Gemini, Grok) with noise injection to create diverse AI-centric prompts.
@@ -15,7 +23,8 @@ Unlike traditional studies utilizing human-centric datasets (e.g., Reddit posts)
     *   **Ekman:** 6 Basic Emotions.
     *   **Plutchik:** Wheel of Emotions (8 basic emotions).
     *   **GoEmotions:** Fine-grained taxonomy (27 categories).
-4.  **Analysis:** Linear Probing (separability) and Representational Similarity Analysis (RSA).
+4.  **Representational Analysis:** Linear Probing (separability) and Representational Similarity Analysis (RSA).
+5.  **Cross-Domain Generalization:** Comparing the representational quality of AI-centric vs. human-centric stimuli by training linear probes on one domain and evaluating on the out-of-domain stimuli.
 
 ---
 
@@ -45,7 +54,7 @@ This project relies on `vLLM` for inference and `PyTorch` for analysis.
 
 ## 🚀 Workflow & Usage
 
-The analysis pipeline consists of four distinct stages.
+The analysis pipeline consists of five distinct stages.
 
 ### 1. Prompt Generation
 Generate synthetic, AI-centric emotional prompts using external APIs.
@@ -90,8 +99,8 @@ Annotate the generated responses using GPT-5-mini, based on specific taxonomies.
     ```
     *Output:* `data/04_annotated/annotated_results.jsonl`
 
-### 4. Data Processing & Analysis
-Merge the text inputs, annotations, and vector activations into a unified format for analysis.
+### 4. Data Processing & Baseline Setup
+Merge the text inputs, annotations, and vector activations into a unified format.
 
 1.  **Pair Outputs with Activations:**
     Matches the JSONL text outputs with the `.pt` tensor files.
@@ -105,32 +114,49 @@ Merge the text inputs, annotations, and vector activations into a unified format
     python scripts/annotations_and_activations_merge.py
     ```
 
-3.  **Descriptive Analysis:**
+3.  **Merge Human-Centric Baseline Datasets:**
+    Combine traditional human-centric baseline datasets (e.g., Andy Zou's representation engineering situations and Emotion Query datasets) for comparison against our AI-centric stimuli.
+    ```bash
+    python scripts/human_centric_datasets_merge.py
+    ```
+    *Output:* `MERGED_andyzou_emotion_query_Llama-2-7b-chat-hf_FINAL.pkl`
+
+### 5. Representational Analysis
+Perform statistical and geometric analysis on the internal representations.
+
+1.  **Descriptive Analysis:**
     Analyze assessment responses distributions and reluctance rates.
     ```bash
     python src/nlp/rating_analysis.py
     ```
 
-4.  **Linear Probing (Classifiers):**
+2.  **Linear Probing (Classifiers):**
     Train Logistic Regression probes on the residual stream to predict emotion labels.
     ```bash
     # Train probes on annotated responses
     python src/probes/train_linear_probes_on_annotations.py
-    
-    # (Optional) Train probes on prompt-implied emotions
-    # python src/probes/train_linear_probe_prompt_emotion.py
     ```
 
-5.  **Feature Visualization (Heatmaps):**
-    Compare weight vectors across taxonomies.
-    ```bash
-    python src/probes/features_heatmap.py
-    ```
-
-6.  **Representational Similarity Analysis (RSA):**
+3.  **Representational Similarity Analysis (RSA):**
     Compute RDMs to compare the geometry of the model's activation space against theoretical emotion models.
     ```bash
     python src/probes/RSA_multilabel.py
+    ```
+
+4.  **Cross-Dataset Robustness Testing (AI vs. Human-centric):**
+    Perform out-of-domain evaluation. Train linear probes on AI-centric activations and evaluate on human-centric stimuli (and vice versa) using a stratified bootstrapping approach.
+    ```bash
+    python src/probes/interdataset_cross_testing.py
+    ```
+
+5.  **Feature Visualization & Alignment (Heatmaps):**
+    Compare weight vectors across taxonomies, or across dataset domains (AI-centric vs. Human-centric) to observe if the model uses consistent geometric directions for affective concepts regardless of the stimuli domain.
+    ```bash
+    # Intra-dataset taxonomy alignment
+    python src/probes/features_heatmap.py
+    
+    # Inter-dataset alignment (AI-centric vs Human-centric)
+    python src/probes/interdataset_features_heatmap.py
     ```
 
 
@@ -149,8 +175,21 @@ Merge the text inputs, annotations, and vector activations into a unified format
 ├── src/
 │   ├── llm/              # Generation, Hooks, and Model loading
 │   ├── nlp/              # Text processing, Annotation logic, Reluctance analysis
-│   └── probes/           # Linear Probing, RSA, and Heatmap generation
+│   └── probes/           # Linear Probing, RSA, Cross-testing, and Heatmap generation
 └── vllm_changes/         # Monkey-patched model files for vLLM activation extraction
+```
 
 ## ⚠️ Note on vLLM Modifications
 This project uses custom logic to extract activations from `vLLM`. The files in `vllm_changes/` (`llama.py`, `qwen2.py`, `hook_store.py`) inject a hook into the `forward` pass of the model to offload hidden states to the CPU/Disk during inference. `src/llm/generate_with_hooks.py` handles the orchestration of these hooks.
+
+---
+
+## 📚 References
+
+The theoretical frameworks and comparative datasets used in this repository are based on the following works:
+
+*   Demszky, D., Movshovitz-Attias, D., Ko, J., Cowen, A., Nemade, G., & Ravi, S. (2020, July). **GoEmotions: A dataset of fine-grained emotions.** *In Proceedings of the 58th annual meeting of the association for computational linguistics* (pp. 4040-4054).
+*   Dong, Y., Jin, L., Yang, Y., Lu, B., Yang, J., & Liu, Z. (2025). **From Rational Answers to Emotional Resonance: The Role of Controllable Emotion Generation in Language Models.** *arXiv preprint arXiv:2502.04075.*
+*   Ekman, P. (1993). **Facial expression and emotion.** *American psychologist*, 48(4), 384.
+*   Plutchik, R. (1980). **A general psychoevolutionary theory of emotion.** *In Theories of emotion* (pp. 3-33). Academic press.
+*   Zou, A., Phan, L., Chen, S., Campbell, J., Guo, P., Ren, R., ... & Hendrycks, D. (2023). **Representation engineering: A top-down approach to ai transparency.** *arXiv preprint arXiv:2310.01405.*
