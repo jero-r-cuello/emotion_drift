@@ -11,3 +11,4 @@ figures/
 src/nlp/rating_analysis.py
 src/probes/poolings_comparison_nonlinear.py
 src/probes/poolings_comparison.py
+__pycache__/
