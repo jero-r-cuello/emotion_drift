@@ -1,9 +1,3 @@
-Here is the updated `README.md`. I have integrated the new concepts from your work-in-progress paper (specifically **RQ2** and **Section 2.5: Human- and AI-centric situations comparison**) and added the three new scripts to the workflow section. 
-
-I placed the new scripts into logical directories based on your existing structure (`scripts/` for merging, and `src/probes/` for the cross-testing and heatmaps), but feel free to adjust the paths if you saved them differently.
-
-***
-
 # Latent Affective Structure in LLMs: AI-Centric Emotion Analysis
 
 This repository contains the code and data for the research project investigating the latent affective structure of Large Language Models (LLMs), specifically Llama-2-7b and Qwen2.5-14B. 
