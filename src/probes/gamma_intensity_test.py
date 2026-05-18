@@ -110,7 +110,7 @@ ACTIVATION_COL = "last_token_activation"
 # For Llama-2-7B (32 layers + embedding = layers 0-32), the probe-perf
 # plateau on Ekman appears around L10-20 in your figure. Use the full
 # plateau, not a single layer, to avoid cherry-picking.
-PLATEAU_LAYERS = list(range(10, 21))  # L10 through L20 inclusive
+PLATEAU_LAYERS = list(range(33))  # L0 through L32 inclusive
 
 # Match by primary emotion label of which taxonomy?
 # Ekman = 7 categories (smaller, more samples per cell, cleaner test)
