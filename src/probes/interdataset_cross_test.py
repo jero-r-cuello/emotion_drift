@@ -79,35 +79,41 @@ def load_model(dataset_prefix, taxonomy, layer):
         
     return None
 
-def stratified_bootstrap_metric(y_true, y_pred, n_iterations=10000, ci=0.95, seed=42):
+# Percentiles stored from the bootstrap distribution so any dispersion band
+# (percentile CI, mean +- k*SD, ...) can be drawn later without re-bootstrapping.
+PERCENTILES = [2.5, 5, 16, 25, 75, 84, 95, 97.5]
+
+
+def bootstrap_f1(y_true, y_pred, n_iterations=10000, seed=42):
+    """Bootstrap distribution of macro F1.
+
+    Stratified (preserving class proportions) when every class has >= 2 examples;
+    otherwise falls back to a simple bootstrap. Returns the array of replicates.
     """
-    Perform stratified Bootstrapping.
-    Maintain the proportion of classes in each subsample, avoiding
-    instability in the F1-Score for unbalanced classes.
-    """
-    stats = []
-    
-    alpha = (1.0 - ci) / 2.0
     rng = np.random.RandomState(seed)
-    
+    _, counts = np.unique(y_true, return_counts=True)
+    stratify_possible = np.all(counts >= 2)
+
+    boot = np.empty(n_iterations)
     for i in range(n_iterations):
         iter_seed = rng.randint(0, 2**32 - 1)
-        
-        y_t_boot, y_p_boot = resample(
-            y_true, y_pred, 
-            replace=True, 
-            stratify=y_true,
-            random_state=iter_seed
-        )
-        
-        score = f1_score(y_t_boot, y_p_boot, average="macro", zero_division=0)
-        stats.append(score)
-    
-    lower = np.percentile(stats, alpha * 100)
-    upper = np.percentile(stats, (1.0 - alpha) * 100)
-    mean_score = np.mean(stats)
-    
-    return mean_score, lower, upper
+        if stratify_possible:
+            y_t, y_p = resample(y_true, y_pred, replace=True,
+                                stratify=y_true, random_state=iter_seed)
+        else:
+            y_t, y_p = resample(y_true, y_pred, replace=True, random_state=iter_seed)
+        boot[i] = f1_score(y_t, y_p, average="macro", zero_division=0)
+    return boot
+
+
+def summarize_boot(boot):
+    """Summary stats of a bootstrap distribution: mean, std (SE) and percentiles."""
+    out = {"f1_mean": float(np.mean(boot)), "f1_std": float(np.std(boot, ddof=1))}
+    for p in PERCENTILES:
+        out[f"f1_p{str(p).replace('.', '_')}"] = float(np.percentile(boot, p))
+    out["f1_lower"] = out["f1_p2_5"]    # backward-compat (95% CI)
+    out["f1_upper"] = out["f1_p97_5"]
+    return out
 
 
 results = []
@@ -125,65 +131,25 @@ for taxonomy in TAXONOMIES:
         if X_human is None or X_gen is None:
             continue
             
-        # Comprobación de seguridad: Stratified requiere al menos 2 ejemplos por clase
-        # Si una clase tiene 1 solo ejemplo, 'stratify' fallará.
-        # En ese caso, hacemos fallback a bootstrap simple.
-        try:
-            unique, counts = np.unique(y_human, return_counts=True)
-            stratify_possible_human = np.all(counts >= 2)
-            
-            unique_gen, counts_gen = np.unique(y_gen, return_counts=True)
-            stratify_possible_gen = np.all(counts_gen >= 2)
-        except:
-            stratify_possible_human = False
-            stratify_possible_gen = False
-
         # Test A: Gen -> Human
         model_gen = load_model(NAME_GEN, taxonomy, layer)
         if model_gen is not None:
             y_pred_gh = model_gen.predict(X_human)
-            
-            if stratify_possible_human:
-                mean, low, high = stratified_bootstrap_metric(y_human, y_pred_gh, BOOTSTRAP_ITERATIONS, CONFIDENCE_LEVEL, RANDOM_SEED)
-            
-            else:
-                y_t_boot, y_p_boot = resample(y_human, y_pred_gh, replace=True, random_state=RANDOM_SEED)
-                stats = [f1_score(*resample(y_human, y_pred_gh, replace=True), average="macro", zero_division=0) for _ in range(BOOTSTRAP_ITERATIONS)]
-                alpha = (1.0 - CONFIDENCE_LEVEL) / 2.0
-                mean, low, high = np.mean(stats), np.percentile(stats, alpha*100), np.percentile(stats, (1-alpha)*100)
-
-            results.append({
-                "taxonomy": taxonomy,
-                "layer": layer,
-                "train_source": "Generated",
-                "test_source": "Human",
-                "f1_mean": mean,
-                "f1_lower": low,
-                "f1_upper": high
-            })
+            boot = bootstrap_f1(y_human, y_pred_gh, BOOTSTRAP_ITERATIONS, RANDOM_SEED)
+            row = {"taxonomy": taxonomy, "layer": layer,
+                   "train_source": "Generated", "test_source": "Human"}
+            row.update(summarize_boot(boot))
+            results.append(row)
 
         # Test B: Human -> Gen
         model_human = load_model(NAME_HUMAN, taxonomy, layer)
         if model_human is not None:
             y_pred_hg = model_human.predict(X_gen)
-            
-            if stratify_possible_gen:
-                mean, low, high = stratified_bootstrap_metric(y_gen, y_pred_hg, BOOTSTRAP_ITERATIONS, CONFIDENCE_LEVEL, RANDOM_SEED)
-            
-            else:
-                stats = [f1_score(*resample(y_gen, y_pred_hg, replace=True), average="macro", zero_division=0) for _ in range(BOOTSTRAP_ITERATIONS)]
-                alpha = (1.0 - CONFIDENCE_LEVEL) / 2.0
-                mean, low, high = np.mean(stats), np.percentile(stats, alpha*100), np.percentile(stats, (1-alpha)*100)
-            
-            results.append({
-                "taxonomy": taxonomy,
-                "layer": layer,
-                "train_source": "Human",
-                "test_source": "Generated",
-                "f1_mean": mean,
-                "f1_lower": low,
-                "f1_upper": high
-            })
+            boot = bootstrap_f1(y_gen, y_pred_hg, BOOTSTRAP_ITERATIONS, RANDOM_SEED)
+            row = {"taxonomy": taxonomy, "layer": layer,
+                   "train_source": "Human", "test_source": "Generated"}
+            row.update(summarize_boot(boot))
+            results.append(row)
 
 
 if not results:
