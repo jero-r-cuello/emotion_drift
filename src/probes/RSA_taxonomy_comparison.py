@@ -203,7 +203,7 @@ err_high = [r['ci_high'] - r['mean_corr'] for r in rows]
 x = np.arange(len(pairs))
 
 bars = plt.bar(x, means, yerr=[err_low, err_high], capsize=6,
-               color='tab:teal', alpha=0.85, label='Observed (95% CI)')
+               color='tab:cyan', alpha=0.85, label='Observed (95% CI)')
 # shuffle chance band (max upper CI across pairs as a reference line)
 for i, r in enumerate(rows):
     plt.hlines(r['shuffle_ci_high'], x[i] - 0.4, x[i] + 0.4,
