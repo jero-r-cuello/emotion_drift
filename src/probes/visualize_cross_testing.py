@@ -39,9 +39,9 @@ from sklearn.metrics import f1_score
 from sklearn.utils import resample
 
 # --- CONFIGURACIÓN ---
-LLM_USED = "Llama-2-7b-chat-hf"
+LLM_USED = "Qwen2.5-14B-Instruct" # "Llama-2-7b-chat-hf"
 BASE_DIR = "/home/jcuello/emotion_drift"
-MODEL_DIM = 4096  # 5120 for Qwen2.5-14B
+MODEL_DIM = 5120 # 4096 #  for Qwen2.5-14B
 FIGURES_DIR = os.path.join(BASE_DIR, "figures", f"cross_testing_performance_{LLM_USED}")
 
 # Cross-testing bootstrap results (from interdataset_cross_test.py)
@@ -55,8 +55,8 @@ TAXONOMIES = ['ekman_basic_emotions', 'plutchik_wheel']
 MODELS_DIR = os.path.join(BASE_DIR, "models")
 
 # Baseline point-estimate CSVs (in-domain macro F1, single split).
-PATH_BASELINE_GEN = "results/probes_generated_prompts_Llama-2-7b-chat-hf/full_probing_metrics_Llama-2-7b-chat-hf_final_F1.csv"
-PATH_BASELINE_HUMAN = "results/probes_human_centric_Llama-2-7b-chat-hf/full_probing_metrics_Llama-2-7b-chat-hf_final_F1.csv"
+PATH_BASELINE_GEN = "results/probes_generated_prompts_Qwen2.5-14B-Instruct/full_probing_metrics_Qwen2.5-14B-Instruct_final_F1.csv"
+PATH_BASELINE_HUMAN = "results/probes_human_centric_Qwen2.5-14B-Instruct/full_probing_metrics_Qwen2.5-14B-Instruct_final_F1.csv"
 
 # Split reconstruction (must match train_linear_probes_on_annotations.py).
 MIN_SAMPLES_REQUIRED = 5
@@ -83,7 +83,7 @@ IN_DOMAIN = {
         "dataset": "generated_prompts",
         "data_path": os.path.join(
             BASE_DIR, "data", "03_activations",
-            "generated_prompts_Llama-2-7b-chat-hf_20251014_203636_FINAL_WITH_RATINGS_AND_CATS.pkl",
+            "generated_prompts_Qwen2.5-14B-Instruct_20251220_225401_FINAL.pkl",
         ),
         "baseline_csv": PATH_BASELINE_GEN,
         "color": "#1f77b4",
@@ -93,7 +93,7 @@ IN_DOMAIN = {
         "dataset": "human_centric",
         "data_path": os.path.join(
             BASE_DIR, "data", "03_activations",
-            "MERGED_andyzou_emotion_query_Llama-2-7b-chat-hf_FINAL.pkl",
+            "MERGED_andyzou_emotion_query_Qwen2.5-14B-Instruct_20260618_152745_FINAL.pkl",
         ),
         "baseline_csv": PATH_BASELINE_HUMAN,
         "color": "#ff7f0e",
@@ -347,8 +347,14 @@ def plot_metric(subset, tax, boot_df, metric):
         base = base[base["taxonomy"] == tax].sort_values("layer")
         b = boot_df[(boot_df["train_source"] == train_source) &
                     (boot_df["taxonomy"] == tax)].sort_values("layer")
-        ys += _draw_series(base["layer"], base["macro_f1"],
-                           b if not b.empty else None, metric,
+        # Plot the bootstrap mean (same estimator the band is built from) so the
+        # dashed line tracks the band center. Fall back to the single-split
+        # point estimate only when no bootstrap stats are available.
+        if not b.empty:
+            x_line, y_line, band = b["layer"], b["f1_mean"], b
+        else:
+            x_line, y_line, band = base["layer"], base["macro_f1"], None
+        ys += _draw_series(x_line, y_line, band, metric,
                            cfg["color"], cfg["label"], "--")
 
     _finalize(tax, ys, f" — band: {metric['label']}",
@@ -379,11 +385,15 @@ if __name__ == "__main__":
     required_cols = {"f1_mean", "f1_std", _pct_col(2.5), _pct_col(97.5)}
     boot_df = None
     if USE_CACHED_BOOTSTRAP and os.path.exists(BOOTSTRAP_CSV):
-        cached = pd.read_csv(BOOTSTRAP_CSV)
-        if required_cols.issubset(cached.columns):
+        try:
+            cached = pd.read_csv(BOOTSTRAP_CSV)
+        except pd.errors.EmptyDataError:
+            cached = None
+            print(f"Caché in-domain vacía/corrupta ({BOOTSTRAP_CSV}); recalculando...")
+        if cached is not None and required_cols.issubset(cached.columns):
             boot_df = cached
             print(f"Stats in-domain cargadas desde caché: {BOOTSTRAP_CSV}")
-        else:
+        elif cached is not None:
             print("Caché in-domain en formato viejo; recalculando...")
     if boot_df is None:
         print("Calculando stats in-domain (bootstrap estratificado, sin reentrenar)...")
