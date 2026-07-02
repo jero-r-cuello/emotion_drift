@@ -34,13 +34,13 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 
 # --- CONFIG ---
-LLM_USED = "Llama-2-7b-chat-hf"   # "Qwen2.5-14B-Instruct"
-DATASET = "generated_prompts"     # "human_centric"
-MODEL_DIM = 4096                  # 5120 for Qwen2.5-14B
-BASE_DIR = "/home/jcuello/emotion_drift"
+LLM_USED = os.environ.get("PROBE_LLM", "Llama-2-7b-chat-hf")   # "Qwen2.5-14B-Instruct"
+DATASET = os.environ.get("PROBE_DATASET", "generated_prompts")  # "human_centric"
+MODEL_DIM = int(os.environ.get("PROBE_MODEL_DIM", "4096"))      # 5120 for Qwen2.5-14B
+BASE_DIR = os.environ.get("PROBE_BASE_DIR", "/home/jcuello/emotion_drift")
 
 # Must match the training run that produced the CSV / models.
-DATA_PATH = "/home/jcuello/emotion_drift/data/03_activations/generated_prompts_Llama-2-7b-chat-hf_20251014_203636_FINAL_WITH_RATINGS_AND_CATS.pkl"
+DATA_PATH = os.environ.get("PROBE_DATA_PATH", "/home/jcuello/emotion_drift/data/03_activations/generated_prompts_Llama-2-7b-chat-hf_20251014_203636_FINAL_WITH_RATINGS_AND_CATS.pkl")
 SENTIMENT_TARGETS = ['ekman_basic_emotions', 'go_emotions', 'plutchik_wheel']
 MIN_SAMPLES_REQUIRED = 5
 SPLIT_RANDOM_STATE = 42

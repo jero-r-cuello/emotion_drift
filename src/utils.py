@@ -2,8 +2,10 @@
 
 import os
 import json
+import glob
+import pickle
 import numpy as np
-import torch 
+import torch
 import pandas as pd
 import random
 from tqdm import tqdm
@@ -86,6 +88,90 @@ def pre_processing_results(run_to_load, dataset_used, save=True):
     return df_nested
 
 
+def consolidate_activations(run, dataset_used, base_dir="data", save=True,
+                            activations_base=None, out_dir=None):
+    """
+    Build the nested-DataFrame activation pkl from the per-chunk pickles written
+    by generate_with_hooks.py (the new storage format: a few dozen chunk_*.pkl
+    files per run instead of millions of per-(prompt,layer) .pt files).
+
+    Reads:
+      base_dir/02_generated/outputs_<run>.jsonl                       (metadata)
+      <act_base>/activations_<run>/chunk_*.pkl                         (pooled activations)
+    Writes:
+      <out_dir>/<dataset_used>_<run>.pkl
+
+    `activations_base` is where the chunk pkls live (default
+    base_dir/03_activations; pass the same dir given to generate_with_hooks,
+    e.g. a network drive). `out_dir` is where the consolidated pkl is written
+    (default = activations_base, since it can be large). Output schema matches
+    the old pairing output, so the annotation-merge and probe/RSA scripts are
+    unchanged: columns [prompt_id, prompt, generated_text, emotion_considered,
+    label, split, activations], where `activations` is a per-prompt DataFrame
+    indexed by layer_number with one column per pooling (e.g. last_token_activation).
+    """
+    act_base = activations_base if activations_base else os.path.join(base_dir, "03_activations")
+    out_base = out_dir if out_dir else act_base
+    act_dir = os.path.join(act_base, f"activations_{run}")
+    jsonl_path = os.path.join(base_dir, "02_generated", f"outputs_{run}.jsonl")
+    out_pkl = os.path.join(out_base, f"{dataset_used}_{run}.pkl")
+
+    # ---- metadata ----
+    meta = {}
+    with open(jsonl_path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            r = json.loads(line)
+            pk = r.get("prompt_key")
+            if not pk or pk == "results":
+                continue
+            r["prompt_id"] = int(str(pk).split("_")[-1])
+            meta[r["prompt_id"]] = r
+
+    # ---- pooled activations from chunk pkls (dedup by prompt_id) ----
+    chunk_files = sorted(glob.glob(os.path.join(act_dir, "chunk_*.pkl")))
+    if not chunk_files:
+        raise FileNotFoundError(f"No chunk_*.pkl found in {act_dir}")
+    acts = {}
+    for cf in tqdm(chunk_files, desc="Reading activation chunks"):
+        with open(cf, "rb") as f:
+            acts.update(pickle.load(f))  # {prompt_id: {layer_idx: {pool: np.ndarray}}}
+
+    # ---- build nested DataFrame ----
+    rows = []
+    for pid, layer_map in acts.items():
+        m = meta.get(pid)
+        if m is None:
+            continue
+        recs = []
+        for layer in sorted(layer_map.keys()):
+            rec = {"layer_number": layer}
+            for pool, arr in layer_map[layer].items():
+                rec[f"{pool}_activation"] = arr
+            recs.append(rec)
+        activations_df = pd.DataFrame(recs).set_index("layer_number").sort_index()
+        rows.append({
+            "prompt_id": pid,
+            "prompt": m.get("prompt"),
+            "generated_text": m.get("generated_text"),
+            "emotion_considered": m.get("emotion_considered"),
+            "label": m.get("label", -1),
+            "split": m.get("split", "unknown"),
+            "activations": activations_df,
+        })
+
+    nested_df = pd.DataFrame(rows).sort_values("prompt_id").reset_index(drop=True)
+    print(f"Consolidated {len(nested_df)} prompts x "
+          f"{nested_df['activations'].iloc[0].shape[0] if len(nested_df) else 0} layers.")
+    if save:
+        os.makedirs(os.path.dirname(out_pkl), exist_ok=True)
+        nested_df.to_pickle(out_pkl)
+        print(f"Saved -> {out_pkl}")
+    return nested_df
+
+
 def load_dataset(dataset_name, testing=False):
     """
     Load datasets based on the provided dataset name.
@@ -107,6 +193,28 @@ def load_dataset(dataset_name, testing=False):
         df_dataset = pd.read_csv(data_path)
         df_dataset.rename(columns={"generated_prompt":"situation","emotion_target":"emotion"}, inplace=True)
         mask_to_drop = df_dataset["situation"].str.startswith("JSON Decode Error", na=False)
+        df_dataset = df_dataset[~mask_to_drop].reset_index(drop=True)
+
+    elif dataset_name == "generated_human_prompts":
+        # Style-matched 3rd-person human-centric control set, produced by
+        # generate_prompts.py with PROMPT_STYLE="human_centric".
+        data_path = os.path.join("data", "01_stimuli", "generated_human_prompts", "generated_human_emotional_prompts_batched.csv")
+        df_dataset = pd.read_csv(data_path)
+        df_dataset.rename(columns={"generated_prompt":"situation","emotion_target":"emotion"}, inplace=True)
+        # Drop generation/parse failures (the generator writes these prefixes on error).
+        failure_prefixes = ("JSON Decode Error", "RAW_OUTPUT:", "API_ERROR:")
+        mask_to_drop = df_dataset["situation"].str.startswith(failure_prefixes, na=False)
+        df_dataset = df_dataset[~mask_to_drop].reset_index(drop=True)
+
+    elif dataset_name == "generated_human_conversation_prompts":
+        # Human-content "sharing" set: a person confides an emotional human
+        # situation to the assistant (addressed register, no call to action),
+        # produced by generate_prompts.py with PROMPT_STYLE="human_conversation".
+        data_path = os.path.join("data", "01_stimuli", "generated_human_conversation_prompts", "generated_human_conversation_prompts_batched.csv")
+        df_dataset = pd.read_csv(data_path)
+        df_dataset.rename(columns={"generated_prompt":"situation","emotion_target":"emotion"}, inplace=True)
+        failure_prefixes = ("JSON Decode Error", "RAW_OUTPUT:", "API_ERROR:")
+        mask_to_drop = df_dataset["situation"].str.startswith(failure_prefixes, na=False)
         df_dataset = df_dataset[~mask_to_drop].reset_index(drop=True)
 
     else:

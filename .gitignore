@@ -7,7 +7,7 @@ models/
 .env
 notebooks/
 figures/
-*.png
+
 src/nlp/rating_analysis.py
 src/probes/poolings_comparison_nonlinear.py
 src/probes/poolings_comparison.py

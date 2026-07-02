@@ -7,11 +7,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from tqdm import tqdm
 
-LLM_USED = "Llama-2-7b-chat-hf" 
+LLM_USED = os.environ.get("HEATMAP_LLM", "Llama-2-7b-chat-hf")
 MODELS_DIR_BASE = "models"
 
-DATASET_A = "generated_prompts"
-DATASET_B = "human_centric"
+DATASET_A = os.environ.get("HEATMAP_DS_A", "generated_prompts")
+DATASET_B = os.environ.get("HEATMAP_DS_B", "human_centric")
 
 HEATMAPS_DIR = os.path.join("figures", f"cross_dataset_features_{DATASET_A}_vs_{DATASET_B}_{LLM_USED}")
 

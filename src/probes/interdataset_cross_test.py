@@ -12,26 +12,41 @@ LLM_USED = "Llama-2-7b-chat-hf"
 MODELS_DIR_BASE = "models"
 FIGURES_DIR = os.path.join("figures", f"cross_testing_performance_{LLM_USED}")
 
-PATH_HUMAN = "data/03_activations/MERGED_andyzou_emotion_query_Llama-2-7b-chat-hf_FINAL.pkl"
-PATH_GEN = "data/03_activations/generated_prompts_Llama-2-7b-chat-hf_20251014_203636_FINAL_WITH_RATINGS_AND_CATS.pkl"
+DRIVE = "/is/cluster/fast/jgeiping/activations_emotion_project"
+PATH_HUMAN = os.environ.get("CT_PATH_HUMAN", f"{DRIVE}/generated_human_prompts_Llama-2-7b-chat-hf_20260625_humanprompts_FINAL.pkl")
+PATH_GEN = os.environ.get("CT_PATH_GEN", f"{DRIVE}/generated_prompts_Llama-2-7b-chat-hf_20260625_aicentric_FINAL.pkl")
 
-NAME_GEN = "generated_prompts"
-NAME_HUMAN = "human_centric"
+NAME_GEN = os.environ.get("CT_NAME_GEN", "generated_prompts")
+NAME_HUMAN = os.environ.get("CT_NAME_HUMAN", "human_centric")
 
 TAXONOMIES = ["ekman_basic_emotions", "plutchik_wheel", "go_emotions"]
-LAYERS = range(33)
-ACTIVATION_COL = "last_token_activation"
+LAYERS = range(32)  # Llama-2-7b: 32 decoder layers captured (0..31)
+ACTIVATION_COL = os.environ.get("CT_ACT_COL", "last_token_activation")
 
 # Statistical parameters
-BOOTSTRAP_ITERATIONS = 10000 
+BOOTSTRAP_ITERATIONS = int(os.environ.get("CROSSTEST_BOOTSTRAP", "10000"))
 CONFIDENCE_LEVEL = 0.95  
 RANDOM_SEED = 42
 
 os.makedirs(FIGURES_DIR, exist_ok=True)
 
+print(f"[crosstest] BOOTSTRAP_ITERATIONS={BOOTSTRAP_ITERATIONS} | GEN={NAME_GEN} HUMAN={NAME_HUMAN}", flush=True)
 print("LOADING DATASETS...")
-df_human = pd.read_pickle(PATH_HUMAN)
-df_gen = pd.read_pickle(PATH_GEN)
+
+
+def _load_retry(path, tries=15, wait=30):
+    import time as _t
+    for a in range(1, tries + 1):
+        try:
+            return pd.read_pickle(path)
+        except (BlockingIOError, OSError) as e:
+            print(f"[crosstest] load attempt {a} for {os.path.basename(path)} failed ({e}); retry in {wait}s", flush=True)
+            _t.sleep(wait)
+    raise SystemExit(f"[crosstest] giving up loading {path} (SMB unstable)")
+
+
+df_human = _load_retry(PATH_HUMAN)
+df_gen = _load_retry(PATH_GEN)
 print(f"Datasets loaded.")
 
 def get_data_for_layer_strict(df, layer, taxonomy):
@@ -156,7 +171,7 @@ if not results:
     exit()
 
 results_df = pd.DataFrame(results)
-results_df.to_csv(os.path.join(FIGURES_DIR, "cross_test_bootstrap_results.csv"), index=False)
+results_df.to_csv(os.path.join(FIGURES_DIR, f"cross_test_bootstrap_results_{NAME_GEN}_vs_{NAME_HUMAN}.csv"), index=False)
 
 sns.set_style("whitegrid")
 plt.rcParams.update({"font.size": 12})

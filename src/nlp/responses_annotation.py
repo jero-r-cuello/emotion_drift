@@ -7,21 +7,29 @@ from openai import OpenAI
 from tqdm import tqdm
 from dotenv import load_dotenv
 
-# Which run to process (must match the filename in data/02_generated/outputs_*.jsonl)
-RUN_TO_PROCESS = "Llama-2-7b-chat-hf_20260127_151151"
-# Number of responses per API call (each response will be annotated with 3 taxonomies, so 1 text = 3 requests)
-BATCH_SIZE = 15 
 load_dotenv()
 API_KEY = os.getenv("OPENAI_API_KEY")
-# Dataset to be processed (for metadata purposes, it must match the source of generated responses)
-DATASET = "andyzou_situations" # "generated_prompts" # "emotion_query" #
 
-INPUT_FILE_PATH = f"data/02_generated/outputs_{RUN_TO_PROCESS}.jsonl"
-OUTPUT_FILE_PATH = f"data/04_annotated/batch_results_{RUN_TO_PROCESS}.jsonl"
+# --- Annotation config (full 2 models x 3 stimulus domains) ---
+# Outputs + temp files go to the network drive (the root disk is full).
+ANNOT_DIR = "/is/cluster/fast/jgeiping/annotated"
+TMP_DIR = os.path.join(ANNOT_DIR, "_tmp")
+REQ_PER_BATCH = 9000        # requests per Batch job (~3000 responses; under the 50k-req / 200MB limits)
+MAX_BATCH_RETRIES = 3       # retry a failed/expired batch instead of silently skipping it
+
+# (run_id, dataset). Each run -> its own batch_results_<run>.jsonl on the drive.
+RUNS = [
+    ("Llama-2-7b-chat-hf_20260625_humanprompts", "generated_human_prompts"),
+    ("Llama-2-7b-chat-hf_20260625_humanconv", "generated_human_conversation_prompts"),
+    ("Llama-2-7b-chat-hf_20260625_aicentric", "generated_prompts"),
+    ("Qwen2.5-14B-Instruct_20260625_humanprompts", "generated_human_prompts"),
+    ("Qwen2.5-14B-Instruct_20260625_humanconv", "generated_human_conversation_prompts"),
+    ("Qwen2.5-14B-Instruct_20260625_aicentric", "generated_prompts"),
+]
 
 # Annotator specs
 MODEL_NAME = "gpt-5-mini-2025-08-07"
-EFFORT = "high"
+EFFORT = "low"   # calibration: low ~= medium ~= high on primary labels (10/12, Jaccard 0.87) at ~1/5 the output cost
 
 client = OpenAI(api_key=API_KEY)
 
@@ -146,7 +154,7 @@ def create_batch_file_content(chunk_data: List[Dict]) -> List[Dict]:
                                "text": {"verbosity": "medium",
                                         "format": {"type": "json_object"}},
                                 "reasoning": {"effort": EFFORT},
-                                "prompt_cache_key": "gen-1757602875-878DOlG67xz757xY9tkV"
+                                "prompt_cache_key": f"annot-{tax_name}"
                                 }
             }
             batch_rows.append(request_obj)
@@ -184,102 +192,107 @@ def monitor_batch(batch_id: str):
         time.sleep(sleep_time)
 
 
-def main():
-    if not os.path.exists(OUTPUT_FILE_PATH):
-        print(f"Creating results file: {OUTPUT_FILE_PATH}")
-        with open(OUTPUT_FILE_PATH, "w", encoding="utf-8") as f:
-            pass 
+MAX_INFLIGHT = 16   # concurrent Batch jobs (self-throttles if the org enqueue limit is hit)
+POLL = 45           # seconds between status polls
 
-    print(f"Reading input file: {INPUT_FILE_PATH}")
-    input_data = []
-    with open(INPUT_FILE_PATH, "r", encoding="utf-8") as f:
-        for line in f:
-            if line.strip():
-                input_data.append(json.loads(line))
 
-    total_texts = len(input_data)
-    
-    for i in tqdm(range(0, total_texts, BATCH_SIZE), desc="Processing batches", unit="batch"):
-        chunk = input_data[i : i + BATCH_SIZE]
-        print(f"\n--- Processing batchs from {i} to {min(i + BATCH_SIZE, total_texts)} ---")
-        
-        # Generar las requests para este chunk
-        batch_requests = create_batch_file_content(chunk)
-        temp_input_filename = f"temp_batch_input_{i}.jsonl"
-        
-        # Guardar archivo temporal jsonl para subir
-        with open(temp_input_filename, "w", encoding="utf-8") as f:
-            for req in batch_requests:
-                f.write(json.dumps(req) + "\n")
-        
-        try:
-            # Subir archivo
-            print(f"Uploading file {temp_input_filename}...")
-            batch_input_file = client.files.create(
-                file=open(temp_input_filename, "rb"),
-                purpose="batch"
-            )
-            
-            # Crear Batch Job
-            print("Creating batch job...")
-            batch_job = client.batches.create(
-                input_file_id=batch_input_file.id,
-                endpoint="/v1/responses",
-                completion_window="24h",
-                metadata={"description": f"Annotation run {RUN_TO_PROCESS} chunk {i}"}
-            )
-            print(f"Batch Job created with ID: {batch_job.id}")
-            
-            # Monitorear
-            finished_batch = monitor_batch(batch_job.id)
-            
-            # Procesar Resultados
-            if finished_batch.status == "completed" and finished_batch.output_file_id:
-                print("Batch completed. Downloading results...")
-                file_response = client.files.content(finished_batch.output_file_id)
-                content = file_response.text
-                
-                result_lines = content.strip().split("\n")
-                save_lines_to_file(OUTPUT_FILE_PATH, result_lines)
-                print(f"Results saved ({len(result_lines)} lines) to {OUTPUT_FILE_PATH}")
-                
-            # Chequeo específico de status 'failed' y descarga del error
-            elif finished_batch.status == "failed":
-                print(f"The batch failed (Status: failed)!")
-                print(finished_batch)
-                
-                # Caso 1: Fallo de validación (El error está en el objeto, no en un archivo)
-                if finished_batch.errors:
-                    print("\n========== Validation error ==========")
-                    print(json.dumps(finished_batch.errors, indent=2))
-                    print("===========================================\n")
-                
-                # Caso 2: Fallo con archivo generado (menos común en validación, pero posible)
-                elif finished_batch.error_file_id:
-                    print(f"Downloading error file (ID: {finished_batch.error_file_id})...")
-                    try:
-                        error_response = client.files.content(finished_batch.error_file_id)
-                        print(error_response.text)
-                    except Exception as e:
-                        print(f"Unable to download file: {e}")
+def _pending_for_run(run):
+    """Resume-aware: (output_path, fail_path, [pending request dicts]) for a run."""
+    input_path = f"data/02_generated/outputs_{run}.jsonl"
+    output_path = os.path.join(ANNOT_DIR, f"batch_results_{run}.jsonl")
+    fail_path = os.path.join(ANNOT_DIR, f"failed_{run}.txt")
+    os.makedirs(ANNOT_DIR, exist_ok=True)
+    if not os.path.exists(input_path):
+        print(f"[{run}] input missing: {input_path}; skipping", flush=True)
+        return None
+    done = set()
+    if os.path.exists(output_path):
+        for line in open(output_path, "r", encoding="utf-8"):
+            try:
+                done.add(json.loads(line).get("custom_id"))
+            except json.JSONDecodeError:
+                pass
+    responses = [json.loads(l) for l in open(input_path, "r", encoding="utf-8") if l.strip()]
+    all_reqs = create_batch_file_content(responses)
+    todo = [r for r in all_reqs if r["custom_id"] not in done]
+    print(f"[{run}] {len(responses)} resp x {len(TAXONOMIES)} = {len(all_reqs)} reqs | "
+          f"{len(done)} done | {len(todo)} to do", flush=True)
+    return output_path, fail_path, todo
+
+
+def _submit(task):
+    """Upload + create one Batch job; return job_id. Does NOT wait."""
+    os.makedirs(TMP_DIR, exist_ok=True)
+    tmp = os.path.join(TMP_DIR, f"in_{task['run']}_{task['chunk_idx']}.jsonl")
+    with open(tmp, "w", encoding="utf-8") as f:
+        for r in task["requests"]:
+            f.write(json.dumps(r) + "\n")
+    try:
+        bf = client.files.create(file=open(tmp, "rb"), purpose="batch")
+        job = client.batches.create(
+            input_file_id=bf.id, endpoint="/v1/responses", completion_window="24h",
+            metadata={"description": f"annot {task['run']} chunk {task['chunk_idx']}"})
+        return job.id
+    finally:
+        if os.path.exists(tmp):
+            os.remove(tmp)
+
+
+def run_all():
+    """Annotate all RUNS with up to MAX_INFLIGHT Batch jobs running CONCURRENTLY
+    (instead of one-at-a-time), polling them and saving as each completes.
+    Resumable (skips done custom_ids) and retries failed/expired batches."""
+    out_paths, fail_paths, pending = {}, {}, []
+    for run, _ds in RUNS:
+        info = _pending_for_run(run)
+        if info is None:
+            continue
+        output_path, fail_path, todo = info
+        out_paths[run], fail_paths[run] = output_path, fail_path
+        for ci, i in enumerate(range(0, len(todo), REQ_PER_BATCH)):
+            pending.append(dict(run=run, chunk_idx=ci, requests=todo[i:i + REQ_PER_BATCH], retries=0))
+    print(f"\n[orchestrator] {len(pending)} batches pending; up to {MAX_INFLIGHT} concurrent\n", flush=True)
+
+    inflight, saved = {}, 0
+    while pending or inflight:
+        while pending and len(inflight) < MAX_INFLIGHT:
+            task = pending.pop(0)
+            try:
+                jid = _submit(task)
+                inflight[jid] = task
+                print(f"  submitted {task['run']} chunk {task['chunk_idx']} -> {jid[:20]} "
+                      f"(inflight {len(inflight)}, pending {len(pending)})", flush=True)
+            except Exception as e:
+                task["retries"] += 1
+                print(f"  submit failed {task['run']} chunk {task['chunk_idx']}: {e}; requeue", flush=True)
+                if task["retries"] <= MAX_BATCH_RETRIES:
+                    pending.append(task)
+                time.sleep(10)
+                break   # likely the org enqueue limit; let some finish before retrying
+        for jid in list(inflight):
+            try:
+                b = client.batches.retrieve(jid)
+            except Exception:
+                continue
+            if b.status == "completed" and b.output_file_id:
+                t = inflight.pop(jid)
+                lines = [l for l in client.files.content(b.output_file_id).text.split("\n") if l.strip()]
+                save_lines_to_file(out_paths[t["run"]], lines)
+                saved += len(lines)
+                print(f"  DONE {t['run']} chunk {t['chunk_idx']} (+{len(lines)}; total saved {saved})", flush=True)
+            elif b.status in ("failed", "expired", "cancelled"):
+                t = inflight.pop(jid)
+                t["retries"] += 1
+                print(f"  {b.status} {t['run']} chunk {t['chunk_idx']} (retry {t['retries']})", flush=True)
+                if t["retries"] <= MAX_BATCH_RETRIES:
+                    pending.append(t)
                 else:
-                    print("The batch failed, but there are no details about ‘errors’ or ‘error_file_id’.")
+                    with open(fail_paths[t["run"]], "a", encoding="utf-8") as f:
+                        f.write(f"chunk {t['chunk_idx']}: FAILED after {MAX_BATCH_RETRIES} retries\n")
+        if pending or inflight:
+            time.sleep(POLL)
+    print("\nALL RUNS DONE", flush=True)
 
-            # Otros estados (expired, cancelled, etc.)
-            else:
-                print(f"The batch finished with status: {finished_batch.status}")
-                if finished_batch.error_file_id:
-                    print(f"There is an error file (ID: {finished_batch.error_file_id}), but the status is not 'failed' or 'completed'.")
-
-        # Completely uknown error (0 information about what happened)
-        except Exception as e:
-            print(f"An error occurred while processing chunk {i}: {e}")
-        
-        finally:
-            if os.path.exists(temp_input_filename):
-                os.remove(temp_input_filename)
-
-    print("\nProcess completed.")
 
 if __name__ == "__main__":
-    main()
+    run_all()

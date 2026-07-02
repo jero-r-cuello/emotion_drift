@@ -8,14 +8,14 @@ import seaborn as sns
 from tqdm import tqdm
 from itertools import combinations
 
-LLM_USED = "Llama-2-7b-chat-hf" # "Qwen2.5-14B-Instruct" # 
-DATASET = "generated_prompts"
+LLM_USED = os.environ.get("PROBE_LLM", "Llama-2-7b-chat-hf")  # "Qwen2.5-14B-Instruct"
+DATASET = os.environ.get("PROBE_DATASET", "generated_prompts")
 MODELS_DIR_BASE = "models"
 HEATMAPS_DIR = os.path.join("figures", f"probe_features_heatmaps_{DATASET}_{LLM_USED}")
 
 # Taonomies to be compared
 TAXONOMIES = ["ekman_basic_emotions", "go_emotions", "plutchik_wheel"]
-MODEL_DIM = 4096 # 5120 #
+MODEL_DIM = int(os.environ.get("PROBE_MODEL_DIM", "4096"))  # 5120 for Qwen
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")

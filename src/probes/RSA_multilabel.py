@@ -11,13 +11,15 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics import pairwise_distances
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-LLM_NAME = "Llama-2-7b-chat-hf" # "Qwen2.5-14B-Instruct" # 
-DATASET = "generated_prompts"
-MODEL_SHAPE = 4096 # 5120 # 
+LLM_NAME = os.environ.get("PROBE_LLM", "Llama-2-7b-chat-hf")  # "Qwen2.5-14B-Instruct"
+DATASET = os.environ.get("PROBE_DATASET", "generated_prompts")
+MODEL_SHAPE = int(os.environ.get("PROBE_MODEL_DIM", "4096"))  # 5120 for Qwen
 
-DATA_PATH = "data/03_activations/generated_prompts_Llama-2-7b-chat-hf_20251014_203636_FINAL_WITH_RATINGS_AND_CATS.pkl" # "/home/jcuello/emotion_drift/data/03_activations/generated_prompts_Qwen2.5-14B-Instruct_20251220_225401_FINAL.pkl" # 
+DATA_PATH = os.environ.get("PROBE_DATA_PATH", "data/03_activations/generated_prompts_Llama-2-7b-chat-hf_20251014_203636_FINAL_WITH_RATINGS_AND_CATS.pkl")
 SENTIMENT_TARGETS = ['ekman_basic_emotions', 'plutchik_wheel', 'go_emotions']
-OUTPUT_DIR = f"results/{LLM_NAME}_{DATASET}/rsa_analysis"
+ACT_COL = os.environ.get("PROBE_ACT_COL", "last_token_activation")
+SUF = "" if ACT_COL == "last_token_activation" else "_" + ACT_COL.replace("_activation", "")
+OUTPUT_DIR = f"results/{LLM_NAME}_{DATASET}{SUF}/rsa_analysis"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # RSA Parameters
@@ -145,7 +147,13 @@ def plot_complexity_percentage(df_results, output_path):
 
 # --- 1. Load Data ---
 print(f"Loading data from {DATA_PATH}...")
-df_original = pd.read_pickle(DATA_PATH)
+import time as _t
+_df=None
+for _a in range(1,16):
+    try: _df=pd.read_pickle(DATA_PATH); break
+    except (BlockingIOError,OSError) as _e: print(f'load attempt {_a} failed ({_e}); retry 30s',flush=True); _t.sleep(30)
+if _df is None: raise SystemExit('giving up (SMB)')
+df_original=_df
 
 # Clean Labels: Keep lists, ensure no empties
 for target in SENTIMENT_TARGETS:
@@ -170,7 +178,7 @@ for layer_num in range(num_layers):
     X_list, y_df_list = [], []
     for i in range(len(df_original)):
         try:
-            act = df_original['activations'].iloc[i].iloc[layer_num]['last_token_activation']
+            act = df_original['activations'].iloc[i].iloc[layer_num][ACT_COL]
             if isinstance(act, np.ndarray) and act.squeeze().shape == (MODEL_SHAPE,):
                 X_list.append(act.squeeze())
                 y_df_list.append(df_original.iloc[i])
