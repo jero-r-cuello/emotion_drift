@@ -19,3 +19,9 @@ list_passport.py
 passport.yaml
 rejection_log.yaml
 papers/
+
+.venv
+.log
+logs
+_models_local
+_locallogs
