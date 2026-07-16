@@ -28,6 +28,12 @@ but *given in the prompt* for human stimuli) generalizes across architectures.
 
 | model | domain | prompt-last | gen-last | pattern |
 |---|---|---|---|---|
+| Llama-2-7b (dense, *original*) | ai_centric | 0.277 | **0.392** | **gen > prompt** |
+|  | human_3rd | **0.381** | 0.363 | prompt > gen |
+|  | human_conv | **0.393** | 0.337 | prompt > gen |
+| Qwen2.5-14B (dense, *original*) | ai_centric | 0.188 | **0.217** | **gen > prompt** |
+|  | human_3rd | *sweep running* | | |
+|  | human_conv | *sweep running* | | |
 | Llama-3.1-8B (dense) | ai_centric | 0.253 | **0.285** | **gen > prompt** |
 |  | human_3rd | **0.408** | 0.326 | prompt > gen |
 |  | human_conv | **0.366** | 0.298 | prompt > gen |
@@ -44,11 +50,16 @@ but *given in the prompt* for human stimuli) generalizes across architectures.
 |  | human_3rd | **0.385** | 0.237 | prompt > gen |
 |  | human_conv | **0.527** | 0.352 | prompt > gen |
 
-**All 5 new models done (7 total with the original Llama-2 + Qwen2.5).** Summary: **5 of 7 models
-reproduce** the AI-centric gen > prompt dissociation — all the *dense* text models (Llama-2, Qwen2.5,
-Llama-3.1-8B, Qwen3-14B, GLM-4-32B); the **2 exceptions (gemma-4 MoE, Qwen3.6 hybrid) are prompt-dominant
-in every domain**. All human-domain cells are prompt > gen for *every* model — only the *AI-centric* cell
-differs, and only for those two.
+**All 7 models in one table.** Summary: **5 of 7 models reproduce** the AI-centric gen > prompt
+dissociation — all the *dense* text models (Llama-2, Qwen2.5, Llama-3.1-8B, Qwen3-14B, GLM-4-32B); the
+**2 exceptions (gemma-4 MoE, Qwen3.6 hybrid) are prompt-dominant in every domain**. All human-domain
+cells are prompt > gen for *every* model — only the *AI-centric* cell differs, and only for those two.
+
+*Method note:* the two original models' numbers come from `slot_sweep` (all rows, `max_iter=2000`); the
+five new models' from `merge_and_probe` (8k stratified subsample, `max_iter=500`). Same probe recipe and
+chance-correction, so the prompt-vs-gen contrast within a model is like-for-like; tiny absolute
+differences across the two paths are expected. (Cross-check: the Llama-2 plateaus recomputed here —
+0.277/0.392, 0.381/0.363, 0.393/0.337 — reproduce the original section-04 table to ~0.005.)
 
 ## Findings
 1. **5 of 7 models reproduce the double dissociation** (original Llama-2, Qwen2.5; new Llama-3.1-8B,
