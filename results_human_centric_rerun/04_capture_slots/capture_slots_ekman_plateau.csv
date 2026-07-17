@@ -1,0 +1,22 @@
+model,domain,prompt_last,gen_last,verdict
+Llama-2-7b,ai_centric,0.277,0.392,gen > prompt
+Llama-2-7b,human_3rd,0.381,0.363,prompt > gen
+Llama-2-7b,human_conversation,0.393,0.337,prompt > gen
+Qwen2.5-14B,ai_centric,0.188,0.217,gen > prompt
+Qwen2.5-14B,human_3rd,0.422,0.393,prompt > gen
+Qwen2.5-14B,human_conversation,0.401,0.361,prompt > gen
+Llama-3.1-8B,ai_centric,0.253,0.285,gen > prompt
+Llama-3.1-8B,human_3rd,0.408,0.326,prompt > gen
+Llama-3.1-8B,human_conversation,0.366,0.298,prompt > gen
+Qwen3-14B,ai_centric,0.188,0.225,gen > prompt
+Qwen3-14B,human_3rd,0.325,0.258,prompt > gen
+Qwen3-14B,human_conversation,0.437,0.34,prompt > gen
+GLM-4-32B,ai_centric,0.253,0.358,gen > prompt
+GLM-4-32B,human_3rd,0.386,0.362,prompt > gen
+GLM-4-32B,human_conversation,0.44,0.405,prompt > gen
+gemma-4-12b,ai_centric,0.288,0.249,prompt > gen
+gemma-4-12b,human_3rd,0.366,0.25,prompt > gen
+gemma-4-12b,human_conversation,0.445,0.314,prompt > gen
+Qwen3.6-27B,ai_centric,0.272,0.199,prompt > gen
+Qwen3.6-27B,human_3rd,0.385,0.237,prompt > gen
+Qwen3.6-27B,human_conversation,0.527,0.352,prompt > gen

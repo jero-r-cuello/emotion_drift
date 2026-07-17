@@ -74,16 +74,34 @@ evidence that the **response-emotion representation is domain-general** (matches
 cosine). So the asymmetry that dominates the input representation largely dissolves in the response representation.
 
 ### 04_capture_slots/
-Per-layer selectivity, one line per capture slot. **Double dissociation (where affect lives):**
+Per-layer selectivity, one line per capture slot (prompt/gen × residual/MLP-component),
+3 taxonomy panels per plot. **21 plots = 7 models × 3 domains**: `slots_<model>_<domain>.png`
+(models: `llama` = Llama-2-7b, `qwen` = Qwen2.5-14B, `llama31`, `qwen314`, `glm4`, `gemma4`, `qwen36`).
 
-| domain | prompt-last | gen-last |
-|---|---|---|
-| ai_centric | 0.276 | **0.394** ↑ |
-| human_3rd | 0.382 | 0.368 ≈ |
-| human_conv | 0.390 | 0.340 ↓ |
+**Double dissociation (where affect lives)** — Ekman plateau (50-85% depth), prompt-last vs gen-last;
+full table in `capture_slots_ekman_plateau.csv`:
 
-gen-last ≫ prompt-last **only for ai_centric**; residual ≥ MLP-component. Qwen replicates
-(gen 0.278 > prompt 0.192). The draft's core figures all used the *prompt* token → **conservative**.
+| model | ai_centric | human_3rd | human_conv |
+|---|---|---|---|
+| **Llama-2-7b** (dense) | 0.277 → **0.392** ↑ | 0.381 → 0.363 ↓ | 0.393 → 0.337 ↓ |
+| **Qwen2.5-14B** (dense) | 0.188 → **0.217** ↑ | 0.422 → 0.393 ↓ | 0.401 → 0.361 ↓ |
+| **Llama-3.1-8B** (dense) | 0.253 → **0.285** ↑ | 0.408 → 0.326 ↓ | 0.366 → 0.298 ↓ |
+| **Qwen3-14B** (dense) | 0.188 → **0.225** ↑ | 0.325 → 0.258 ↓ | 0.437 → 0.340 ↓ |
+| **GLM-4-32B** (dense) | 0.253 → **0.358** ↑ | 0.386 → 0.362 ↓ | 0.440 → 0.405 ↓ |
+| **gemma-4-12b** (MoE) | 0.288 → 0.249 ↓ | 0.366 → 0.250 ↓ | 0.445 → 0.314 ↓ |
+| **Qwen3.6-27B** (hybrid) | 0.272 → 0.199 ↓ | 0.385 → 0.237 ↓ | 0.527 → 0.352 ↓ |
+
+(cells read `prompt-last → gen-last`; ↑ = gen > prompt.)
+
+**gen-last > prompt-last only for ai_centric, and only in the 5 dense models** — every human-domain cell is
+prompt > gen for every model. Residual ≥ MLP-component throughout. The two exceptions (gemma-4 MoE,
+Qwen3.6 hybrid) are prompt-dominant everywhere; that split is **not** attributable to their vision towers
+(inference is text-only) and is confounded across MoE/hybrid-attention/training — see
+`RESULTS_SUMMARY_2026/09_new_models/README.md`. The draft's core figures all used the *prompt* token →
+**conservative**.
+
+The dissociation also holds in **go_emotions and plutchik**, not just Ekman (see the 3 panels per plot),
+so it is not a taxonomy artifact.
 
 ### 05_feature_heatmaps_within_dataset/  &  05b (gen)
 Cosine between GoEmotions and Plutchik probe **weight vectors** at the plateau layer (Llama L20, Qwen L28).

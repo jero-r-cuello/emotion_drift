@@ -15,14 +15,17 @@ but *given in the prompt* for human stimuli) generalizes across architectures.
   chance-corrected normalized macro-F1; plateau = mid–upper layers.
 - **Metric table:** `newmodel_ekman_selectivity.csv` (plateau normalized-F1 per model × domain × slot).
 
-## Figures (`figures/`, from `scripts/plot_newmodel_gen_selectivity.py`)
+## Figures (`figures/`, from `scripts/plot_newmodel_gen_selectivity.py`) — **all 7 models**
 - **`gen_vs_prompt_plateau.png`** — plateau normalized-F1 bars, prompt-last vs gen-last, per model × domain.
-  The AI-centric panel is the headline: gen>prompt (red taller) for the three dense models, prompt>gen for
-  gemma-4/Qwen3.6; every human-domain bar is prompt>gen.
-- **`gen_selectivity_by_layer.png`** — full per-layer curves (5 models × 3 domains), gen-last (red dashed)
+  The AI-centric panel is the headline: gen>prompt (red taller) for **all five dense models** (left of the
+  dashed divider), prompt>gen for gemma-4/Qwen3.6; every human-domain bar is prompt>gen.
+- **`gen_selectivity_by_layer.png`** — full per-layer curves (7 models × 3 domains), gen-last (red dashed)
   vs prompt-last (blue), x = relative depth. Same story resolved across the depth of the network.
-  (Point estimates from the probe CSVs — no bootstrap bands; the 4 core models' probe weights weren't
-  retained, so the weight-geometry figures 05b/06b are only reproducible for GLM without re-probing.)
+
+Point estimates, no bootstrap bands. The two originals' per-layer curves come from `slot_sweep_*.csv`
+(Ekman, `last_token_activation` vs `gen_last_token_activation`); the five new models' from the probe CSVs.
+The 4 core new models' probe *weights* weren't retained, so the weight-geometry figures (05b/06b) are only
+reproducible for GLM without re-probing.
 
 ## Result — plateau normalized-F1 (prompt-last vs gen-last)
 
@@ -32,8 +35,8 @@ but *given in the prompt* for human stimuli) generalizes across architectures.
 |  | human_3rd | **0.381** | 0.363 | prompt > gen |
 |  | human_conv | **0.393** | 0.337 | prompt > gen |
 | Qwen2.5-14B (dense, *original*) | ai_centric | 0.188 | **0.217** | **gen > prompt** |
-|  | human_3rd | *sweep running* | | |
-|  | human_conv | *sweep running* | | |
+|  | human_3rd | **0.422** | 0.393 | prompt > gen |
+|  | human_conv | **0.401** | 0.361 | prompt > gen |
 | Llama-3.1-8B (dense) | ai_centric | 0.253 | **0.285** | **gen > prompt** |
 |  | human_3rd | **0.408** | 0.326 | prompt > gen |
 |  | human_conv | **0.366** | 0.298 | prompt > gen |
