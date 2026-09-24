@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
+import matplotlib.lines as mpl_lines
 import seaborn as sns
 from tqdm import tqdm
 from scipy.stats import spearmanr
@@ -269,40 +270,60 @@ for layer_num in range(num_layers):
 results_df = pd.DataFrame(all_layer_metrics)
 results_df.to_csv(f"{OUTPUT_DIR}/rsa_robust_metrics.csv", index=False)
 
-colors = {'ekman_basic_emotions': 'tab:blue', 'plutchik_wheel': 'tab:orange', 'go_emotions': 'tab:green'}
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # cwd-independent
+from paper_style import (apply_paper_style, pretty, COLORS as colors,
+                         MARKERS, TEXTWIDTH_IN, save_paper_figure)
 
-# PLOT 1: Robust Comparison
-plt.figure(figsize=(14, 8))
-for target in SENTIMENT_TARGETS:
-    sub = results_df[results_df['taxonomy'] == target]
-    plt.plot(sub['layer'], sub['mean_corr'], label=f"{target}", color=colors[target], marker='o')
-    plt.plot(sub['layer'], sub['shuffle_corr'], linestyle=':', color=colors[target], alpha=0.6)
-    plt.fill_between(sub['layer'], sub['mean_corr']-sub['std_corr'], sub['mean_corr']+sub['std_corr'], color=colors[target], alpha=0.15)
+apply_paper_style()
 
-plt.title("Multilabel RSA: Theories vs Chance (Weighted Labels & Rank Decay)")
-plt.ylabel("Spearman Correlation")
-plt.xlabel("Layer")
-plt.legend(title="Dashed = Shuffle Control")
-plt.grid(True, alpha=0.3)
-plt.tight_layout()
-plt.savefig(f"{OUTPUT_DIR}/01_multilabel_robust_comparison.png")
-plt.close()
-
-# PLOT 2: Lexical Control
+# PLOT 1+2: the manuscript prints these two side by side as one figure, so they
+# are drawn together, at the width the figure occupies on the page, without
+# titles and with the taxonomy names spelled out.
 if text_col:
-    plt.figure(figsize=(14, 8))
+    fig, (ax_a, ax_b) = plt.subplots(1, 2, figsize=(TEXTWIDTH_IN, 2.95),
+                                     layout="constrained")
     for target in SENTIMENT_TARGETS:
         sub = results_df[results_df['taxonomy'] == target]
-        plt.plot(sub['layer'], sub['lexical_partial'], label=f"{target}", color=colors[target], marker='s')
-        plt.fill_between(sub['layer'], sub['mean_corr'], sub['lexical_partial'], color=colors[target], alpha=0.1) 
-    plt.title("Multilabe Lexical Control: Unique Emotional Info beyond Words")
-    plt.ylabel("Partial Correlation (Data, Emotion | Words)")
-    plt.xlabel("Layer")
-    plt.legend()
-    plt.grid(True, alpha=0.3)
-    plt.tight_layout()
-    plt.savefig(f"{OUTPUT_DIR}/02_multilabel_lexical_control.png")
-    plt.close()
+        c = colors[target]
+        ax_a.plot(sub['layer'], sub['mean_corr'], label=pretty(target),
+                  color=c, marker=MARKERS[target])
+        ax_a.fill_between(sub['layer'], sub['mean_corr'] - sub['std_corr'],
+                          sub['mean_corr'] + sub['std_corr'], color=c,
+                          alpha=0.16, linewidth=0)
+        ax_a.plot(sub['layer'], sub['shuffle_corr'], linestyle=':', color=c,
+                  linewidth=0.9, alpha=0.75)
+
+        ax_b.plot(sub['layer'], sub['lexical_partial'], label=pretty(target),
+                  color=c, marker=MARKERS[target])
+        ax_b.fill_between(sub['layer'], sub['mean_corr'], sub['lexical_partial'],
+                          color=c, alpha=0.13, linewidth=0)
+
+    ax_a.set_ylabel("Spearman correlation")
+    ax_b.set_ylabel("Partial correlation, words removed")
+    for ax, letter in zip((ax_a, ax_b), ("(a)", "(b)")):
+        ax.set_xlabel("Layer")
+        ax.grid(True, linestyle="--", alpha=0.45, linewidth=0.4)
+        ax.set_axisbelow(True)
+        for side in ("top", "right"):
+            ax.spines[side].set_visible(False)
+        ax.set_box_aspect(0.92)
+        ax.text(0.0, 1.035, letter, transform=ax.transAxes, fontsize=9,
+                fontweight="bold", va="bottom", ha="left")
+
+    # Shared scale: the claim is that the partial barely lowers the curves.
+    lo = min(ax_a.get_ylim()[0], ax_b.get_ylim()[0])
+    hi = max(ax_a.get_ylim()[1], ax_b.get_ylim()[1])
+    ax_a.set_ylim(lo, hi)
+    ax_b.set_ylim(lo, hi)
+
+    handles, labels = ax_a.get_legend_handles_labels()
+    ctrl = mpl_lines.Line2D([], [], color="0.45", linestyle=":", linewidth=0.9)
+    fig.legend(handles + [ctrl], labels + ["shuffled-label control"],
+               loc="outside lower center", ncol=4, fontsize=7.5,
+               frameon=False, columnspacing=1.6)
+    save_paper_figure(fig, f"{OUTPUT_DIR}/01_02_multilabel_rsa_and_lexical_control")
+    plt.close(fig)
 
 # PLOT 3: Complexity Analysis
 plt.figure(figsize=(14, 8))

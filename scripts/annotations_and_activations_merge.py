@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # ================= CONFIGURACIÓN =================
-BASE_DIR = "/home/jcuello/emotion_drift"
+BASE_DIR = "."
 RUN_TO_LOAD = "Llama-2-7b-chat-hf_20260127_151151" # "Llama-2-7b-chat-hf_20260127_151453" # "Qwen2.5-14B-Instruct_20251220_225401"# "Llama-2-7b-chat-hf_20251014_203636"
 DATASET_USED = "andyzou_situations" 
 ANNOTATIONS_FILE = "batch_results_Llama-2-7b-chat-hf_20260127_151151.jsonl"
@@ -108,7 +108,13 @@ def plot_emotion_dist(df, col_name, mode='primary', output_dir='.'):
         return
 
     # 2. Configuración del Plot
-    plt.figure(figsize=(12, 8))
+    # Se dibuja al ancho que ocupa en la página (textwidth de 5.5in) y con
+    # alto proporcional al nº de categorías, para que los tipos declarados acá
+    # sean los tipos del PDF. Con figsize=(12,8) e inclusión a 0.85\textwidth el
+    # factor de escala era 0.39: las etiquetas quedaban en ~4pt.
+    n_cat = len(counts)
+    fig_h = max(1.6, 0.155 * n_cat + 0.55)
+    plt.figure(figsize=(5.5 * 0.85, fig_h))
     sns.set_style("white") # Fondo limpio como en la imagen
     
     # Crear paleta: Viridis invertido (o normal dependiendo de la preferencia). 
@@ -121,20 +127,23 @@ def plot_emotion_dist(df, col_name, mode='primary', output_dir='.'):
     ax = sns.barplot(x=counts.values, y=counts.index, palette=colors, hue=counts.index, legend=False)
     
     # 3. Estética
-    pretty_name = col_name.replace("_", " ").title()
-    plt.title(f"{title_prefix}: {pretty_name}", fontsize=16)
-    plt.xlabel("Count", fontsize=12)
-    plt.ylabel("Emotion Label", fontsize=12)
-    
+    # Sin título: el caption del paper ya dice qué es la figura.
+    plt.xlabel("Count", fontsize=9)
+    plt.ylabel("Emotion label", fontsize=9)
+    plt.xticks(fontsize=8)
+    plt.yticks(fontsize=8)
+    # Espacio a la derecha para que las cifras al final de las barras no se corten.
+    plt.xlim(0, counts.values.max() * 1.13)
+
     # Quitar bordes superior y derecho (spine)
     sns.despine()
 
     # 4. Anotaciones al final de las barras
     max_x = counts.values.max()
     offset = max_x * 0.01 # 1% de padding
-    
+
     for i, v in enumerate(counts.values):
-        ax.text(v + offset, i, str(v), color='black', va='center', fontsize=10)
+        ax.text(v + offset, i, str(v), color='black', va='center', fontsize=7)
 
     # 5. Disclaimer Box (Solo para Multilabel como en tu ejemplo)
     if mode == 'multilabel':
@@ -147,18 +156,19 @@ def plot_emotion_dist(df, col_name, mode='primary', output_dir='.'):
         )
         
         # Añadir cuadro de texto centrado abajo
-        plt.figtext(0.5, 0.01, disclaimer_text, ha="center", fontsize=9,
+        plt.figtext(0.5, 0.01, disclaimer_text, ha="center", fontsize=7,
                     bbox={"facecolor":"orange", "alpha":0.2, "pad":5})
-        
+
         # Ajustar márgenes para que quepa el texto
         plt.subplots_adjust(bottom=0.15)
     else:
         plt.subplots_adjust(right=0.95)
 
-    # 6. Guardar
+    # 6. Guardar. La figura ya está al ancho que ocupa en la página, así que dpi
+    # es sólo resolución: 400 está holgadamente por encima de calidad de imprenta.
     filename = f"{col_name}_{mode}.png"
     save_path = os.path.join(output_dir, filename)
-    plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    plt.savefig(save_path, dpi=400, bbox_inches='tight')
     plt.close()
     print(f"    Gráfico guardado: {filename}")
 

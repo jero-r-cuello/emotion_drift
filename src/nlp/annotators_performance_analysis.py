@@ -444,7 +444,15 @@ def plot_sankey(df, target_col, title):
         link=dict(source=links["source"].map(idx_map), target=links["target"].map(idx_map), value=links["value"])
     )])
     fig.update_layout(title_text=title, font_size=12)
-    plt.savefig(f'{FIGS_PATH}/{target_col}_sankey.png', dpi=300)
+    # `fig` is a plotly figure, so plt.savefig (matplotlib) never wrote it --
+    # it silently saved whatever matplotlib canvas happened to be current.
+    # write_image needs kaleido; fall back to HTML so the figure is not lost.
+    out = f'{FIGS_PATH}/{target_col}_sankey'
+    try:
+        fig.write_image(f"{out}.png", scale=3)
+    except Exception as e:
+        fig.write_html(f"{out}.html")
+        print(f"   (kaleido unavailable: {e}; wrote {out}.html instead)")
 
 def run_error_analysis(df):
     print("\nRunning error analysis...")

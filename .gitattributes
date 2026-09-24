@@ -3,3 +3,58 @@
 notebooks/rating_analysis.ipynb filter=lfs diff=lfs merge=lfs -text
 data/02_generated/*.jsonl filter=lfs diff=lfs merge=lfs -text
 data/04_annotated/*.jsonl filter=lfs diff=lfs merge=lfs -text
+
+# --- Submission archive (git archive) --------------------------------------
+# export-ignore keeps a path in the repo but out of the archive. Everything not
+# listed here is part of the archive. A directory is excluded by naming it
+# (`dir`), not its contents (`dir/**`), so no empty directory is left behind;
+# `dir/**` is used only where some files inside are kept with -export-ignore.
+.gitignore export-ignore
+.gitattributes export-ignore
+packages.txt export-ignore
+*.png export-ignore
+/docs export-ignore
+/figures export-ignore
+/RESULTS_SUMMARY_2026 export-ignore
+results_human_centric_rerun/* export-ignore
+results_human_centric_rerun/04_capture_slots -export-ignore
+results_human_centric_rerun/06_cross_domain_class_angles -export-ignore
+
+# Stimuli: only the three final corpora
+data/01_stimuli/andyzou_situations_dataset export-ignore
+data/01_stimuli/xuanfengzu_emotion_query export-ignore
+data/01_stimuli/generated_prompts/*_update-* export-ignore
+
+# Responses and annotations are too large; keep only the calibration CSVs
+data/02_generated export-ignore
+data/04_annotated/** export-ignore
+data/04_annotated/anotacion_manual_generated_responses* -export-ignore
+data/04_annotated/models_annotations_final.csv -export-ignore
+data/04_annotated/gpt-5*-consolidated_annotations.csv -export-ignore
+data/04_annotated/error_analysis_incorrect_annotations*.csv -export-ignore
+
+# Results not used in the paper, or redundant with results/slot_sweep_*.csv
+results/full_probing_metrics_* export-ignore
+results/newmodel_probes export-ignore
+results/probes_human_* export-ignore
+results/probes_generated_prompts_gen_last_token_* export-ignore
+results/*/rsa_taxonomy_comparison export-ignore
+results/Llama-2-7b-chat-hf_generated_prompts_gen_last_token export-ignore
+
+# Analyses that are not part of the paper
+scripts/human_centric_datasets_merge.py export-ignore
+src/llm/beta_test.py export-ignore
+src/llm/beta_test_part2.py export-ignore
+src/llm/emotional_assessment.py export-ignore
+src/llm/try_model.py export-ignore
+src/nlp/batching_and_caching.py export-ignore
+src/nlp/bert_annotators_test.py export-ignore
+src/probes/RSA_only_first_label.py export-ignore
+src/probes/RSA_taxonomy_comparison.py export-ignore
+src/probes/activation_histograms.py export-ignore
+src/probes/gamma_intensity_test.py export-ignore
+src/probes/interdataset_cross_test.py export-ignore
+src/probes/split_dataset_features_heatmap_control.py export-ignore
+src/probes/split_dataset_training_control.py export-ignore
+src/probes/train_linear_probe_prompt_emotion.py export-ignore
+src/probes/visualize_cross_testing.py export-ignore

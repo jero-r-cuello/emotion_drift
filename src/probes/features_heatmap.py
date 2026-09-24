@@ -8,6 +8,13 @@ import seaborn as sns
 from tqdm import tqdm
 from itertools import combinations
 
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # cwd-independent
+from paper_style import (apply_paper_style, pretty, heatmap_figsize,
+                         annot_size, save_paper_figure)
+
+apply_paper_style()
+
 LLM_USED = os.environ.get("PROBE_LLM", "Llama-2-7b-chat-hf")  # "Qwen2.5-14B-Instruct"
 DATASET = os.environ.get("PROBE_DATASET", "generated_prompts")
 MODELS_DIR_BASE = "models"
@@ -65,10 +72,15 @@ def get_cosine_similarity_matrix(weights_a, weights_b):
     return similarity_matrix.cpu().numpy()
 
 def plot_and_save_heatmap(sim_matrix, classes_a, classes_b, name_a, name_b, layer):
-    """Generate and save the heatmap."""
-    plt.figure(figsize=(12, 10))
-    annot_kws_size = 8 if (len(classes_a) > 20 or len(classes_b) > 20) else 10
-    
+    """Generate and save the heatmap, sized for the printed page.
+
+    Drawn at its on-page width so the declared point sizes survive into the PDF;
+    no title (the caption carries it) and taxonomy names spelled out.
+    """
+    n_rows, n_cols = len(classes_a), len(classes_b)
+    fig, ax = plt.subplots(figsize=heatmap_figsize(n_rows, n_cols),
+                           layout="constrained")
+
     sns.heatmap(
         sim_matrix,
         xticklabels=classes_b,
@@ -78,20 +90,22 @@ def plot_and_save_heatmap(sim_matrix, classes_a, classes_b, name_a, name_b, laye
         vmin=-1, vmax=1,
         annot=True,
         fmt=".2f",
-        annot_kws={"size": annot_kws_size},
-        square=False
+        annot_kws={"size": annot_size(n_rows, n_cols)},
+        square=False,
+        ax=ax,
+        cbar_kws={"label": "cosine similarity", "shrink": 0.85},
     )
-    
-    plt.title(f"Cosine Similarity: {name_a} vs {name_b} (Layer {layer})")
-    plt.xlabel(f"{name_b} Classes")
-    plt.ylabel(f"{name_a} Classes")
-    plt.xticks(rotation=45, ha="right")
-    plt.yticks(rotation=0)
-    
-    save_path = os.path.join(HEATMAPS_DIR, f"heatmap_L{layer:02d}_{name_a}_vs_{name_b}.png")
-    plt.tight_layout()
-    plt.savefig(save_path)
-    plt.close()
+
+    ax.set_xlabel(f"{pretty(name_b)} categories")
+    ax.set_ylabel(f"{pretty(name_a)} categories")
+    ax.tick_params(axis="x", rotation=45, labelsize=7)
+    ax.tick_params(axis="y", rotation=0, labelsize=7)
+    for lbl in ax.get_xticklabels():
+        lbl.set_horizontalalignment("right")
+
+    save_path = os.path.join(HEATMAPS_DIR, f"heatmap_L{layer:02d}_{name_a}_vs_{name_b}")
+    save_paper_figure(fig, save_path)
+    plt.close(fig)
 
 
 MAX_LAYERS = 33 if "7b" in LLM_USED else 49

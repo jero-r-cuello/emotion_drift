@@ -12,9 +12,9 @@ LLM_USED = "Llama-2-7b-chat-hf"
 MODELS_DIR_BASE = "models"
 FIGURES_DIR = os.path.join("figures", f"cross_testing_performance_{LLM_USED}")
 
-DRIVE = "/is/cluster/fast/jgeiping/activations_emotion_project"
-PATH_HUMAN = os.environ.get("CT_PATH_HUMAN", f"{DRIVE}/generated_human_prompts_Llama-2-7b-chat-hf_20260625_humanprompts_FINAL.pkl")
-PATH_GEN = os.environ.get("CT_PATH_GEN", f"{DRIVE}/generated_prompts_Llama-2-7b-chat-hf_20260625_aicentric_FINAL.pkl")
+ACTIVATIONS_DIR = os.path.join("data", "03_activations")
+PATH_HUMAN = os.environ.get("CT_PATH_HUMAN", f"{ACTIVATIONS_DIR}/generated_human_prompts_Llama-2-7b-chat-hf_20260625_humanprompts_FINAL.pkl")
+PATH_GEN = os.environ.get("CT_PATH_GEN", f"{ACTIVATIONS_DIR}/generated_prompts_Llama-2-7b-chat-hf_20260625_aicentric_FINAL.pkl")
 
 NAME_GEN = os.environ.get("CT_NAME_GEN", "generated_prompts")
 NAME_HUMAN = os.environ.get("CT_NAME_HUMAN", "human_centric")

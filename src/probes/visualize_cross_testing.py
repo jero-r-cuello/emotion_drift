@@ -40,7 +40,7 @@ from sklearn.utils import resample
 
 # --- CONFIGURACIÓN ---
 LLM_USED = "Qwen2.5-14B-Instruct" # "Llama-2-7b-chat-hf"
-BASE_DIR = "/home/jcuello/emotion_drift"
+BASE_DIR = "."
 MODEL_DIM = 5120 # 4096 #  for Qwen2.5-14B
 FIGURES_DIR = os.path.join(BASE_DIR, "figures", f"cross_testing_performance_{LLM_USED}")
 

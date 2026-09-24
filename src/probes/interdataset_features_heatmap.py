@@ -7,6 +7,13 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from tqdm import tqdm
 
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # cwd-independent
+from paper_style import (apply_paper_style, pretty, heatmap_figsize,
+                         annot_size, save_paper_figure)
+
+apply_paper_style()
+
 LLM_USED = os.environ.get("HEATMAP_LLM", "Llama-2-7b-chat-hf")
 MODELS_DIR_BASE = "models"
 
@@ -69,33 +76,40 @@ def get_cosine_similarity_matrix(weights_a, weights_b):
     return similarity_matrix.cpu().numpy()
 
 def plot_and_save_heatmap(sim_matrix, classes, taxonomy, layer):
-    plt.figure(figsize=(12, 10))
-    
-    annot_kws_size = 7 if len(classes) > 20 else 10
-    
+    """Square cross-domain heatmap, sized for the printed page.
+
+    No title (the caption carries it) and no raw variable names: `taxonomy`
+    and the two dataset keys go through `pretty()`.
+    """
+    n = len(classes)
+    fig, ax = plt.subplots(figsize=heatmap_figsize(n, n, width_frac=0.62),
+                           layout="constrained")
+
     sns.heatmap(
         sim_matrix,
-        xticklabels=classes, 
-        yticklabels=classes, 
-        cmap="RdBu_r", 
+        xticklabels=classes,
+        yticklabels=classes,
+        cmap="RdBu_r",
         center=0,
         vmin=-1, vmax=1,
         annot=True,
         fmt=".2f",
-        annot_kws={"size": annot_kws_size},
-        square=True 
+        annot_kws={"size": annot_size(n, n)},
+        square=True,
+        ax=ax,
+        cbar_kws={"label": "cosine similarity", "shrink": 0.85},
     )
-    
-    plt.title(f"Feature Similarity: {taxonomy}\n{DATASET_A} vs {DATASET_B} (Layer {layer})")
-    plt.xlabel(f"Features from {DATASET_B}")
-    plt.ylabel(f"Features from {DATASET_A}")
-    plt.xticks(rotation=45, ha="right")
-    plt.yticks(rotation=0)
-    
-    save_path = os.path.join(HEATMAPS_DIR, f"heatmap_L{layer:02d}_{taxonomy}_cross_dataset.png")
-    plt.tight_layout()
-    plt.savefig(save_path)
-    plt.close()
+
+    ax.set_xlabel(f"{pretty(DATASET_B)} probe")
+    ax.set_ylabel(f"{pretty(DATASET_A)} probe")
+    ax.tick_params(axis="x", rotation=45, labelsize=7)
+    ax.tick_params(axis="y", rotation=0, labelsize=7)
+    for lbl in ax.get_xticklabels():
+        lbl.set_horizontalalignment("right")
+
+    save_path = os.path.join(HEATMAPS_DIR, f"heatmap_L{layer:02d}_{taxonomy}_cross_dataset")
+    save_paper_figure(fig, save_path)
+    plt.close(fig)
 
 MAX_LAYERS = 33 if "7b" in LLM_USED else 49 
 if "Qwen" in LLM_USED: MAX_LAYERS = 49

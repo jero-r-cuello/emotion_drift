@@ -2,7 +2,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from collections import Counter
 import seaborn as sns
-from sentence_transformers import SentenceTransformer
 from sklearn.decomposition import PCA
 import numpy as np
 import re
@@ -10,6 +9,18 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.util import ngrams
 import os
+
+import matplotlib
+if not os.environ.get("DISPLAY") and os.name != "nt":
+    matplotlib.use("Agg")
+
+# Set by full_pipeline(); keeps the three corpora in separate output folders.
+OUTPUT_TAG = "default"
+
+
+def _outdir():
+    return os.path.join("figures", "generated_prompt_analysis", OUTPUT_TAG)
+
 
 
 def preprocessing(file_name, n_prompts_expected, save):
@@ -61,7 +72,8 @@ def preprocessing(file_name, n_prompts_expected, save):
         if save:
             try:
                 df_prompts = pd.DataFrame(filtered_prompts_dict)
-                output_path = "data/01_stimuli/llm_focused_situations/generated_prompts.csv"
+                output_path = os.path.join(_outdir(), "prompts_used.csv")
+                os.makedirs(_outdir(), exist_ok=True)
                 df_prompts.to_csv(output_path, index=False)
                 print(f"DataFrame saved to {output_path}")
             except Exception as e:
@@ -90,7 +102,8 @@ def preprocessing(file_name, n_prompts_expected, save):
         if save:
             try:
                 df_prompts = pd.DataFrame(filtered_prompts_dict)
-                output_path = "data/01_stimuli/llm_focused_situations/generated_prompts.csv"
+                output_path = os.path.join(_outdir(), "prompts_used.csv")
+                os.makedirs(_outdir(), exist_ok=True)
                 df_prompts.to_csv(output_path, index=False)
                 print(f"DataFrame successfully saved to {output_path}")
             except Exception as e:
@@ -121,8 +134,8 @@ def analisis_sintactico(lista_oraciones, n_of_generation, save):
     plt.ylabel("Frequency")
     plt.tight_layout()
     if save:
-        os.makedirs("figures/generated_prompt_analysis", exist_ok=True)
-        plt.savefig(f"figures/generated_prompt_analysis/sentence_lengths_{n_of_generation}.png",
+        os.makedirs(_outdir(), exist_ok=True)
+        plt.savefig(os.path.join(_outdir(), "sentence_lengths.png"),
                     dpi=300)
     plt.show()
 
@@ -142,8 +155,8 @@ def analisis_sintactico(lista_oraciones, n_of_generation, save):
     plt.ylabel("Word")
     plt.tight_layout()
     if save:
-        os.makedirs("figures/generated_prompt_analysis", exist_ok=True)
-        plt.savefig(f"figures/generated_prompt_analysis/top_starter_words_{n_of_generation}.png",
+        os.makedirs(_outdir(), exist_ok=True)
+        plt.savefig(os.path.join(_outdir(), "top_starter_words.png"),
                     dpi=300)
     plt.show()
 
@@ -176,8 +189,8 @@ def word_frequency_analysis(sentence_list, n_of_generation, save):
     plt.ylabel("Word")
     plt.tight_layout()
     if save:
-        os.makedirs("figures/generated_prompt_analysis", exist_ok=True)
-        plt.savefig(f"figures/generated_prompt_analysis/top_words_{n_of_generation}.png",
+        os.makedirs(_outdir(), exist_ok=True)
+        plt.savefig(os.path.join(_outdir(), "top_words.png"),
                     dpi=300)
     plt.show()
 
@@ -200,8 +213,8 @@ def word_frequency_analysis(sentence_list, n_of_generation, save):
     plt.ylabel("Bigram")
     plt.tight_layout()
     if save:
-        os.makedirs("figures/generated_prompt_analysis", exist_ok=True)
-        plt.savefig(f"figures/generated_prompt_analysis/top_bigrams_{n_of_generation}.png",
+        os.makedirs(_outdir(), exist_ok=True)
+        plt.savefig(os.path.join(_outdir(), "top_bigrams.png"),
                     dpi=300)
     plt.show()
 
@@ -224,8 +237,8 @@ def word_frequency_analysis(sentence_list, n_of_generation, save):
     plt.ylabel("trigram")
     plt.tight_layout()
     if save:
-        os.makedirs("figures/generated_prompt_analysis", exist_ok=True)
-        plt.savefig(f"figures/generated_prompt_analysis/top_trigrams_{n_of_generation}.png",
+        os.makedirs(_outdir(), exist_ok=True)
+        plt.savefig(os.path.join(_outdir(), "top_trigrams.png"),
                     dpi=300)
     plt.show()
 
@@ -248,8 +261,8 @@ def word_frequency_analysis(sentence_list, n_of_generation, save):
     plt.ylabel("4-gram")
     plt.tight_layout()
     if save:
-        os.makedirs("figures/generated_prompt_analysis", exist_ok=True)
-        plt.savefig(f"figures/generated_prompt_analysis/four_gram_{n_of_generation}.png",
+        os.makedirs(_outdir(), exist_ok=True)
+        plt.savefig(os.path.join(_outdir(), "four_gram.png"),
                     dpi=300)
     plt.show()
 
@@ -278,21 +291,51 @@ def semantic_analysis(lista_oraciones, n_of_generation, save):
     plt.ylabel("PC 2")
     plt.tight_layout()
     if save:
-        os.makedirs("figures/generated_prompt_analysis", exist_ok=True)
-        plt.savefig(f"figures/generated_prompt_analysis/embeddings_pca_{n_of_generation}.png",
+        os.makedirs(_outdir(), exist_ok=True)
+        plt.savefig(os.path.join(_outdir(), "embeddings_pca.png"),
                     dpi=300)
     plt.show()
 
-def full_pipeline(file_name, n_of_generation, save=True):
+def full_pipeline(file_name, n_of_generation, save=True, tag=None,
+                  with_semantics=True):
+    """`tag` names the corpus; it is what keeps the three output sets apart."""
+    global OUTPUT_TAG
+    OUTPUT_TAG = tag or str(n_of_generation)
     all_prompts = preprocessing(file_name, n_of_generation, save)
-    analisis_sintactico(all_prompts, n_of_generation,save)
-    word_frequency_analysis(all_prompts, n_of_generation,save)
-    semantic_analysis(all_prompts, n_of_generation,save)
+    analisis_sintactico(all_prompts, n_of_generation, save)
+    word_frequency_analysis(all_prompts, n_of_generation, save)
+    if with_semantics:
+        # Needs sentence_transformers; skip it when only the lexical checks
+        # are wanted (that is all Appendix B reports).
+        semantic_analysis(all_prompts, n_of_generation, save)
 
-#%%    
-generated_prompts = "data/01_stimuli/generated_prompts/generated_emotional_prompts_batched.csv"
 
-full_pipeline(generated_prompts, 50, True)
-print("\nAnalysis completed")
+#%%
+# All three stimulus corpora. The script originally pointed at the AI-centric
+# file alone, from when that was the only generated domain.
+CORPORA = {
+    "ai_centric": "data/01_stimuli/generated_prompts/"
+                  "generated_emotional_prompts_batched.csv",
+    "human_3rd": "data/01_stimuli/generated_human_prompts/"
+                 "generated_human_emotional_prompts_batched.csv",
+    "human_conv": "data/01_stimuli/generated_human_conversation_prompts/"
+                  "generated_human_conversation_prompts_batched.csv",
+}
+
+if __name__ == "__main__":
+    import argparse
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--corpus", choices=list(CORPORA) + ["all"], default="all")
+    ap.add_argument("--no-semantics", action="store_true",
+                    help="skip the sentence-transformers step")
+    args = ap.parse_args()
+
+    todo = list(CORPORA) if args.corpus == "all" else [args.corpus]
+    for tag in todo:
+        print(f"\n{'='*70}\n{tag}\n{'='*70}")
+        full_pipeline(CORPORA[tag], 50, save=True, tag=tag,
+                      with_semantics=not args.no_semantics)
+    print("\nAnalysis completed")
 
 # %%

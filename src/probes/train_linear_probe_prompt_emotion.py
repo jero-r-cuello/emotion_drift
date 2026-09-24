@@ -13,8 +13,8 @@ from tqdm import tqdm
 # --- Configuración ---
 emotion_to_test = "emotion_considered"
 LLM_USED = "Llama-2-7b-chat-hf"
-DATA_PATH = "/home/jcuello/emotion_drift/data/03_activations/generated_prompts_Llama-2-7b-chat-hf_20251014_203636.pkl"
-MODELS_DIR = "/home/jcuello/emotion_drift/models"
+DATA_PATH = "data/03_activations/generated_prompts_Llama-2-7b-chat-hf_20251014_203636.pkl"
+MODELS_DIR = "models"
 dataset_used = "generated_prompts"
 
 USE_PCA = False
@@ -22,7 +22,7 @@ N_COMPONENTS = 5
 
 pca_suffix = '_pca' if USE_PCA else ''
 
-PLOTS_DIR = "/home/jcuello/emotion_drift/figures"
+PLOTS_DIR = "figures"
 LEARNING_CURVES_DIR = os.path.join(PLOTS_DIR, f"learning_curves{pca_suffix}")
 CONFUSION_MATRICES_DIR = os.path.join(PLOTS_DIR, f"confusion_matrices{pca_suffix}")
 ERROR_REPORTS_DIR = os.path.join(PLOTS_DIR, f"error_reports{pca_suffix}")

@@ -11,13 +11,12 @@ load_dotenv()
 API_KEY = os.getenv("OPENAI_API_KEY")
 
 # --- Annotation config (full 2 models x 3 stimulus domains) ---
-# Outputs + temp files go to the network drive (the root disk is full).
-ANNOT_DIR = "/is/cluster/fast/jgeiping/annotated"
+ANNOT_DIR = os.path.join("data", "04_annotated")
 TMP_DIR = os.path.join(ANNOT_DIR, "_tmp")
 REQ_PER_BATCH = 9000        # requests per Batch job (~3000 responses; under the 50k-req / 200MB limits)
 MAX_BATCH_RETRIES = 3       # retry a failed/expired batch instead of silently skipping it
 
-# (run_id, dataset). Each run -> its own batch_results_<run>.jsonl on the drive.
+# (run_id, dataset). Each run -> its own batch_results_<run>.jsonl in ANNOT_DIR.
 RUNS = [
     ("Llama-2-7b-chat-hf_20260625_humanprompts", "generated_human_prompts"),
     ("Llama-2-7b-chat-hf_20260625_humanconv", "generated_human_conversation_prompts"),

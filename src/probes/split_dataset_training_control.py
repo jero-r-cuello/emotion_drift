@@ -18,10 +18,10 @@ DATASET = "generated_prompts"
 TARGET_TAXONOMY = 'ekman_basic_emotions' # Variable solicitada
 
 # Path del archivo (Usando el que pasaste en el ejemplo)
-DATA_PATH = "/home/jcuello/emotion_drift/data/03_activations/generated_prompts_Llama-2-7b-chat-hf_20251014_203636_FINAL_WITH_RATINGS_AND_CATS.pkl"
+DATA_PATH = "data/03_activations/generated_prompts_Llama-2-7b-chat-hf_20251014_203636_FINAL_WITH_RATINGS_AND_CATS.pkl"
 
 # Directorios de salida
-BASE_DIR = "/home/jcuello/emotion_drift"
+BASE_DIR = "."
 # Carpeta específica solicitada
 PROBES_DIR = os.path.join(BASE_DIR, "models", "dataset_split_testing", f"{DATASET}_{LLM_USED}", TARGET_TAXONOMY)
 

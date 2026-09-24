@@ -9,7 +9,7 @@ from tqdm import tqdm
 # --- CONFIGURACIÓN ---
 LLM_USED = "Llama-2-7b-chat-hf"
 DATASET = "generated_prompts"
-BASE_DIR = "/home/jcuello/emotion_drift"
+BASE_DIR = "."
 
 # Directorio donde se guardaron los modelos (según tu script de entrenamiento)
 # Estructura: models/dataset_split_testing/{DATASET}_{LLM}_{TAXONOMY}/...

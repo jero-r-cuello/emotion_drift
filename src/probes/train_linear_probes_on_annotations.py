@@ -36,14 +36,14 @@ ACT_COL = os.environ.get("PROBE_ACT_COL", "last_token_activation")
 SLOT = "" if ACT_COL == "last_token_activation" else "_" + ACT_COL.replace("_activation", "")
 DATA_PATH = os.environ.get(
     "PROBE_DATA_PATH",
-    "/home/jcuello/emotion_drift/data/03_activations/generated_prompts_Llama-2-7b-chat-hf_20251014_203636_FINAL_WITH_RATINGS_AND_CATS.pkl",
+    "data/03_activations/generated_prompts_Llama-2-7b-chat-hf_20251014_203636_FINAL_WITH_RATINGS_AND_CATS.pkl",
 )
 SENTIMENT_TARGETS = ["ekman_basic_emotions", "go_emotions", "plutchik_wheel"]
 N_CONTROL = 3
 min_samples_required = 5  # Puedes subir esto a 3 o 5 si sigue fallando
 
 # Directorios
-BASE_DIR = os.environ.get("PROBE_BASE_DIR", "/home/jcuello/emotion_drift")
+BASE_DIR = os.environ.get("PROBE_BASE_DIR", ".")
 PLOTS_DIR_BASE = os.path.join(BASE_DIR, "figures", f"probes_{DATASET}{SLOT}_{LLM_USED}")
 RESULTS_DIR_BASE = os.path.join(BASE_DIR, "results", f"probes_{DATASET}{SLOT}_{LLM_USED}")
 CM_BASE_DIR = os.path.join(

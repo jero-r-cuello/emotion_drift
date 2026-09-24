@@ -14,9 +14,9 @@ from sklearn.metrics import pairwise_distances
 # --- Configuration ---
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 LLM_NAME = "Llama-2-7b-chat-hf"
-DATA_PATH = "/home/jcuello/emotion_drift/data/03_activations/generated_prompts_Llama-2-7b-chat-hf_20251014_203636_FINAL_WITH_RATINGS_AND_CATS.pkl"
+DATA_PATH = "data/03_activations/generated_prompts_Llama-2-7b-chat-hf_20251014_203636_FINAL_WITH_RATINGS_AND_CATS.pkl"
 SENTIMENT_TARGETS = ['ekman_basic_emotions', 'plutchik_wheel', 'go_emotions']
-OUTPUT_DIR = "/home/jcuello/emotion_drift/results/rsa_analysis"
+OUTPUT_DIR = "results/rsa_analysis"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # RSA Parameters
