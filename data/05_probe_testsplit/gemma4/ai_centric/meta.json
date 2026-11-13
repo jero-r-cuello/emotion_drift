@@ -1,0 +1,45 @@
+{
+ "model": "gemma4",
+ "domain": "ai_centric",
+ "dataset": "generated_prompts",
+ "run": "_models_local_gemma-4-12b-it_20260702_aicentric",
+ "n_layers": 48,
+ "plateau_layers": [
+  24,
+  25,
+  26,
+  27,
+  28,
+  29,
+  30,
+  31,
+  32,
+  33,
+  34,
+  35,
+  36,
+  37,
+  38,
+  39,
+  40
+ ],
+ "repo_layers": [
+  24,
+  28,
+  32,
+  36,
+  40
+ ],
+ "n_train": 6400,
+ "n_test": 1600,
+ "hidden_dim": 3840,
+ "classes": [
+  "Anger",
+  "Disgust",
+  "Enjoyment",
+  "Fear",
+  "Neutral",
+  "Sadness",
+  "Surprise"
+ ]
+}

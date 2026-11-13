@@ -1,0 +1,51 @@
+{
+ "model": "qwen36",
+ "domain": "ai_centric",
+ "dataset": "generated_prompts",
+ "run": "Qwen3.6-27B_20260724_aicentric",
+ "n_layers": 64,
+ "plateau_layers": [
+  32,
+  33,
+  34,
+  35,
+  36,
+  37,
+  38,
+  39,
+  40,
+  41,
+  42,
+  43,
+  44,
+  45,
+  46,
+  47,
+  48,
+  49,
+  50,
+  51,
+  52,
+  53,
+  54
+ ],
+ "repo_layers": [
+  32,
+  38,
+  43,
+  48,
+  54
+ ],
+ "n_train": 6400,
+ "n_test": 1600,
+ "hidden_dim": 5120,
+ "classes": [
+  "Anger",
+  "Disgust",
+  "Enjoyment",
+  "Fear",
+  "Neutral",
+  "Sadness",
+  "Surprise"
+ ]
+}

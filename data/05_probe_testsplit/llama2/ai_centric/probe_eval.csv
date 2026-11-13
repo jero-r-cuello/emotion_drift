@@ -1,0 +1,6 @@
+layer,depth_frac,probe_source,test_macro_f1,test_macro_f1_fp16,logged_macro_f1,split_verified
+16,0.5,retrained_same_recipe,0.3837890612557161,0.3837890612557161,,
+19,0.59375,retrained_same_recipe,0.381041933765485,0.381041933765485,,
+22,0.6875,retrained_same_recipe,0.37935447664767613,0.37935447664767613,,
+24,0.75,retrained_same_recipe,0.3818540467721264,0.3818540467721264,,
+27,0.84375,retrained_same_recipe,0.37961774337612836,0.37961774337612836,,

@@ -1,0 +1,43 @@
+{
+ "model": "qwen314",
+ "domain": "human_conv",
+ "dataset": "generated_human_conversation_prompts",
+ "run": "Qwen3-14B_20260724_humanconv",
+ "n_layers": 40,
+ "plateau_layers": [
+  20,
+  21,
+  22,
+  23,
+  24,
+  25,
+  26,
+  27,
+  28,
+  29,
+  30,
+  31,
+  32,
+  33,
+  34
+ ],
+ "repo_layers": [
+  20,
+  24,
+  27,
+  30,
+  34
+ ],
+ "n_train": 6400,
+ "n_test": 1600,
+ "hidden_dim": 5120,
+ "classes": [
+  "Anger",
+  "Disgust",
+  "Enjoyment",
+  "Fear",
+  "Neutral",
+  "Sadness",
+  "Surprise"
+ ]
+}

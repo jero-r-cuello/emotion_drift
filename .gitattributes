@@ -3,6 +3,7 @@
 notebooks/rating_analysis.ipynb filter=lfs diff=lfs merge=lfs -text
 data/02_generated/*.jsonl filter=lfs diff=lfs merge=lfs -text
 data/04_annotated/*.jsonl filter=lfs diff=lfs merge=lfs -text
+data/05_probe_testsplit/**/*.npz filter=lfs diff=lfs merge=lfs -text
 
 # --- Submission archive (git archive) --------------------------------------
 # export-ignore keeps a path in the repo but out of the archive. Everything not
@@ -36,6 +37,7 @@ data/04_annotated/error_analysis_incorrect_annotations*.csv -export-ignore
 # Results not used in the paper, or redundant with results/slot_sweep_*.csv
 results/full_probing_metrics_* export-ignore
 results/newmodel_probes export-ignore
+data/05_probe_testsplit export-ignore
 results/probes_human_* export-ignore
 results/probes_generated_prompts_gen_last_token_* export-ignore
 results/*/rsa_taxonomy_comparison export-ignore

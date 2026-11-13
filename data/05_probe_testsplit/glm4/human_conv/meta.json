@@ -1,0 +1,49 @@
+{
+ "model": "glm4",
+ "domain": "human_conv",
+ "dataset": "generated_human_conversation_prompts",
+ "run": "_models_local_GLM-4-32B-0414_20260702_humanconv",
+ "n_layers": 61,
+ "plateau_layers": [
+  31,
+  32,
+  33,
+  34,
+  35,
+  36,
+  37,
+  38,
+  39,
+  40,
+  41,
+  42,
+  43,
+  44,
+  45,
+  46,
+  47,
+  48,
+  49,
+  50,
+  51
+ ],
+ "repo_layers": [
+  31,
+  36,
+  41,
+  46,
+  51
+ ],
+ "n_train": 6398,
+ "n_test": 1600,
+ "hidden_dim": 6144,
+ "classes": [
+  "Anger",
+  "Disgust",
+  "Enjoyment",
+  "Fear",
+  "Neutral",
+  "Sadness",
+  "Surprise"
+ ]
+}

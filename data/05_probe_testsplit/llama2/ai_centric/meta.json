@@ -1,0 +1,40 @@
+{
+ "model": "llama2",
+ "domain": "ai_centric",
+ "dataset": "generated_prompts",
+ "run": "Llama-2-7b-chat-hf_20260625_aicentric",
+ "n_layers": 32,
+ "plateau_layers": [
+  16,
+  17,
+  18,
+  19,
+  20,
+  21,
+  22,
+  23,
+  24,
+  25,
+  26,
+  27
+ ],
+ "repo_layers": [
+  16,
+  19,
+  22,
+  24,
+  27
+ ],
+ "n_train": 6400,
+ "n_test": 1600,
+ "hidden_dim": 4096,
+ "classes": [
+  "Anger",
+  "Disgust",
+  "Enjoyment",
+  "Fear",
+  "Neutral",
+  "Sadness",
+  "Surprise"
+ ]
+}

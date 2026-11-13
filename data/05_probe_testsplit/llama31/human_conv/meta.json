@@ -1,0 +1,40 @@
+{
+ "model": "llama31",
+ "domain": "human_conv",
+ "dataset": "generated_human_conversation_prompts",
+ "run": "_models_local_Llama-3.1-8B-Instruct_20260702_humanconv",
+ "n_layers": 32,
+ "plateau_layers": [
+  16,
+  17,
+  18,
+  19,
+  20,
+  21,
+  22,
+  23,
+  24,
+  25,
+  26,
+  27
+ ],
+ "repo_layers": [
+  16,
+  19,
+  22,
+  24,
+  27
+ ],
+ "n_train": 6400,
+ "n_test": 1600,
+ "hidden_dim": 4096,
+ "classes": [
+  "Anger",
+  "Disgust",
+  "Enjoyment",
+  "Fear",
+  "Neutral",
+  "Sadness",
+  "Surprise"
+ ]
+}
